@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function designer_journal_page_menu() {
+    $items = array();
+
+    $items['objects/edit/%/journal_nadzora'] = array(
+        'title' => 'Journal of Supervision',
+        'page callback' => 'designer_journal_page_page',
+        'page arguments' => array(2),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+    );
+
+    return $items;
+}
+
+/**
+ * Page callback function for journal_nadzora page.
+ */
+function designer_journal_page_page($object_id) {
+    // Подключаем содержимое HTML-файла sec_header1.html
+    $sec_header = file_get_contents(drupal_get_path('module', 'designer_journal_page') . '/templates/sec_header1.html');
+
+    // Заменяем {{object_id}} на реальное значение
+    $sec_header = str_replace('{{object_id}}', '' . $object_id, $sec_header);
+
+    // Загружаем ноду по object_id
+    $node = node_load($object_id);
+
+    if ($node) {
+        // Формируем вывод страницы
+        $output = $sec_header;
+        $output .= '<div>' . render(node_view($node)) . '</div>';
+
+        return array(
+            '#markup' => $output,
+        );
+    } else {
+        return array(
+            '#markup' => '<p>Node not found.</p>',
+        );
+    }
+}
