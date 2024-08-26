@@ -153,3 +153,6 @@ function designer_journal_sostav_rbochei_form_submit($form, &$form_state) {
   $form_state['redirect'] = $_GET['q'];
 }
 
+
+
+
