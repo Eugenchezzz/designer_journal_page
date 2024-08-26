@@ -6,7 +6,7 @@
 function designer_journal_page_menu() {
     $items = array();
 
-    $items['objects/edit/%/journal_nadzora'] = array(
+    $items['objects/edit/%/journal_nadzora'] = array(   // основная страница
         'title' => 'Journal of Supervision',
         'page callback' => 'designer_journal_page_page',
         'page arguments' => array(2),
@@ -14,26 +14,139 @@ function designer_journal_page_menu() {
         'type' => MENU_CALLBACK,
     );
 
+    $items['objects/edit/%/journal_nadzora/create'] = array( //путь для кнопки создания журнала
+        'title' => 'Create Journal',
+        'page callback' => 'designer_journal_page_create_journal',
+        'page arguments' => array(2),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+    );
+
+    // МАРШРУТ И ПОДКЛЮЧЕНИЕ СТРАНИЦЫ СОСТАВА
+    $items['objects/edit/%/journal_nadzora/sostav'] = array(
+        'title' => 'Состав',
+        'page callback' => 'designer_journal_page_sostav',
+        'page arguments' => array(2),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+        'file' => 'designer_journal_page_sostav.inc',
+    );
+
+    // Подключаем файл с функциями
+    module_load_include('inc', 'designer_journal_page', 'designer_journal_page.inc');
+
+
+    //МАРШРУТ И ПОДКЛЮЧЕНИЕ СТРАНИЦЫ ПРЕДСТАВИТЕЛЕЙ НАДЗОРА
+
+    // Определяем маршрут для страницы
+    $items['objects/edit/%/journal_nadzora/nadzor_predstaviteli'] = array(
+        'title' => 'Состав',
+        'page callback' => 'designer_journal_page_nadzor_predstaviteli',
+        'page arguments' => array(2),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+        'file' => 'designer_journal_page_nadzor_predstaviteli.inc',
+    );
+
+    // Подключаем файл с функциями
+    module_load_include('inc', 'designer_journal_page', 'designer_journal_nadzor_predstaviteli.inc');
+
+    // МАРШРУТ И ПОДКЛЮЧЕНИЕ СТРАНИЦЫ УЧЕТНОГО ЛИСТА
+
+    // Определяем маршрут для страницы
+    $items['objects/edit/%/journal_nadzora/uchetniy_list'] = array(
+        'title' => 'Состав',
+        'page callback' => 'designer_journal_page_uchetniy_list',
+        'page arguments' => array(2),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+        'file' => 'designer_journal_page_uchetniy_list.inc',
+    );
+
+
+
+    // Подключаем файл с функциями
+    module_load_include('inc', 'designer_journal_page', 'designer_journal_uchetniy_list.inc');
+
+
+
+
     return $items;
 }
 
-/**
- * Page callback function for journal_nadzora page.
- */
+
+
+
+
+
+
 function designer_journal_page_page($object_id) {
     // Подключаем содержимое HTML-файла sec_header1.html
-    $sec_header = file_get_contents(drupal_get_path('module', 'designer_journal_page') . '/templates/sec_header1.html');
+    $sec_header_path = drupal_get_path('module', 'designer_journal_page') . '/templates/sec_header1.html';
+    $sec_header = file_get_contents($sec_header_path);
 
     // Заменяем {{object_id}} на реальное значение
     $sec_header = str_replace('{{object_id}}', '' . $object_id, $sec_header);
+    $create_journal_url = url('objects/edit/' . $object_id . '/journal_nadzora/create', array('absolute' => TRUE));
 
-    // Загружаем ноду по object_id
+    // Загружаем ноду объекта
     $node = node_load($object_id);
 
     if ($node) {
-        // Формируем вывод страницы
-        $output = $sec_header;
-        $output .= '<div>' . render(node_view($node)) . '</div>';
+        // Проверяем, есть ли привязанный журнал
+        if (isset($node->field_journal_nadzora_ref['und']) && !empty($node->field_journal_nadzora_ref['und'][0]['target_id'])) {
+            $journal_nid = $node->field_journal_nadzora_ref['und'][0]['target_id'];
+            $journal_node = node_load($journal_nid);
+
+            if ($journal_node) {
+                // Формируем вывод страницы
+                $output = $sec_header;
+                $output .= '<p>Основная информация по журналу:</p>';
+
+                // Создаем форму для редактирования
+                $form = drupal_get_form('designer_journal_edit_form', $journal_node);
+                $output .= drupal_render($form);
+
+
+                //ВЫВОД ДАННЫХ СУБПОДРЯДЧИКОВ НА СТРАНИЦУ
+
+                // ВЫВОД ДАННЫХ СУБПОДРЯДЧИКОВ НА СТРАНИЦУ
+                $output .= '<h3>' . t('Субподрядчики - исполнители отдельных видов работ') . '</h3>';
+
+                $header = array(
+                    t('Организация (наименование, почтовый адрес)'),
+                    t('Наименование выполняемых работ'),
+                );
+
+                $rows = array();
+
+                foreach ($journal_node->field_subpodryadchiki['und'] as $item) {
+                    $field_collection = field_collection_item_load($item['value']);
+
+                    $rows[] = array(
+                        check_plain($field_collection->field_sub_organization['und'][0]['value']),
+                        check_plain($field_collection->field_vypolnyaemye_raboty['und'][0]['value']),
+                    );
+                }
+
+// Используем функцию theme() для создания таблицы
+                $output .= theme('table', array('header' => $header, 'rows' => $rows));
+
+
+
+
+
+
+                $form_subpod = drupal_get_form('designer_journal_subpodryadchik_form', $journal_node);
+                $output .= drupal_render($form_subpod);
+
+            } else {
+                $output = '<p>Ошибка при загрузке журнала.</p>';
+            }
+        } else {
+            $output = '<p>Журнал еще не создан.</p>';
+            $output .= '<p><a href="' . $create_journal_url . '">Создать журнал</a></p>';
+        }
 
         return array(
             '#markup' => $output,
@@ -44,3 +157,283 @@ function designer_journal_page_page($object_id) {
         );
     }
 }
+
+
+
+
+
+//функция создания формы для записи данных
+function designer_journal_edit_form($form, &$form_state, $journal_node) {
+    // Ensure the node is loaded
+    if (!$journal_node) {
+        return array(
+            '#markup' => '<p>Ошибка: Неверный узел.</p>',
+        );
+    }
+
+    // Define the form
+    $form['#node'] = $journal_node;
+
+   // поля даты создания и окончания журнала
+    $form['field_journal_start_date'] = array(
+        '#type' => 'date_popup',
+        '#title' => t('Дата начала'),
+        '#default_value' => !empty($journal_node->field_journal_start_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($journal_node->field_journal_start_date['und'][0]['value'])),
+                'month' => date('n', strtotime($journal_node->field_journal_start_date['und'][0]['value'])),
+                'day' => date('j', strtotime($journal_node->field_journal_start_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+    );
+
+
+    $form['field_journal_end_date'] = array(
+        '#type' => 'date_popup',
+        '#title' => t('Дата окончания'),
+        '#default_value' => !empty($journal_node->field_journal_end_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($journal_node->field_journal_end_date['und'][0]['value'])),
+                'month' => date('n', strtotime($journal_node->field_journal_end_date['und'][0]['value'])),
+                'day' => date('j', strtotime($journal_node->field_journal_end_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+    );
+
+    // Поле для застройщика
+    $form['field_zastroyshik'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Застройщик'),
+        '#default_value' => isset($journal_node->field_zastroyshik['und'][0]['value']) ? $journal_node->field_zastroyshik['und'][0]['value'] : '',
+    );
+
+    // Поле для заказчика
+    $form['field_zakazchik'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Заказчик'),
+        '#default_value' => isset($journal_node->field_zakazchik['und'][0]['value']) ? $journal_node->field_zakazchik['und'][0]['value'] : '',
+    );
+
+
+   //полная сметная стоимость
+    $form['field_full_smetnaya_stoimost'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Полная сметная стоимость строительства работ'),
+        '#default_value' => $journal_node->field_full_smetnaya_stoimost['und'][0]['value'],
+
+    );
+
+
+    // кнопка сохранения
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
+    );
+
+    return $form;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//вспомогательные функции (кнопки и тд)
+
+//функция обработки кнопки сохранения
+/**
+ * Form submission handler for editing the journal node.
+ */
+/**
+ * Form submission handler for editing the journal node.
+ */
+
+function designer_journal_edit_form_submit($form, &$form_state) {
+    // Load the node object
+    $node = $form['#node'];
+
+    // Обработка полученных значений
+    $node->field_full_smetnaya_stoimost['und'][0]['value'] = $form_state['values']['field_full_smetnaya_stoimost'];
+    $node->field_zastroyshik['und'][0]['value'] = $form_state['values']['field_zastroyshik'];
+    $node->field_zakazchik['und'][0]['value'] = $form_state['values']['field_zakazchik'];
+
+    // Даты начала и окончания
+    $start_date = isset($form_state['values']['field_journal_start_date']) ? $form_state['values']['field_journal_start_date'] : '';
+    $end_date = isset($form_state['values']['field_journal_end_date']) ? $form_state['values']['field_journal_end_date'] : '';
+
+    // Отладка данных
+    watchdog('debug', 'Start Date: %s', array('%s' => $start_date));
+    watchdog('debug', 'End Date: %s', array('%s' => $end_date));
+
+    // Установка значений в ноду
+    $node->field_journal_start_date['und'][0]['value'] = $start_date;
+    $node->field_journal_end_date['und'][0]['value'] = $end_date;
+
+    // Отладка данных
+    watchdog('debug', 'Field Journal Start Date: %s', array('%s' => $node->field_journal_start_date['und'][0]['value']));
+    watchdog('debug', 'Field Journal End Date: %s', array('%s' => $node->field_journal_end_date['und'][0]['value']));
+
+    // Сохранение ноды
+    node_save($node);
+
+    // Вывод сообщения
+    drupal_set_message(t('Журнал авторского надзора обновлен'));
+
+    // Перезагрузка текущей страницы
+    $form_state['redirect'] = $_SERVER['REQUEST_URI'];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//функция создания журнала
+function designer_journal_page_create_journal($object_id) {
+    // Создаем новый журнал
+    $journal = new stdClass();
+    $journal->type = 'journal_nadzora'; // Тип материала
+    $journal->title = 'журнал надзора ' . $object_id . 'ого объекта'; // Заголовок, можно изменить
+    node_object_prepare($journal);
+    $journal->language = LANGUAGE_NONE; // Язык
+    $journal->status = 1; // Опубликован
+
+    // Сохранение ноды
+    node_save($journal); // сохраняем журнал
+    $journal_nid = $journal->nid; // Получаем ID сохраненной ноды
+
+    // Загружаем ноду объекта
+    $object = node_load($object_id);
+    watchdog('designer_journal_page', 'Journal node saved with nid: @nid', array('@nid' => $journal_nid), WATCHDOG_INFO);
+
+    if ($object) {
+        // Устанавливаем значение поля
+        $object->field_journal_nadzora_ref['und'] = array(
+            array('target_id' => $journal_nid)
+        );
+
+        // Обновляем ноду объекта
+        node_save($object);
+
+        // Перенаправление обратно на страницу объекта
+        drupal_goto('objects/edit/' . $object_id . '/journal_nadzora');
+    } else {
+        watchdog('designer_journal_page', 'Node with object ID: @object_id not found.', array('@object_id' => $object_id), WATCHDOG_ERROR); // Отладка
+    }
+}
+
+
+
+
+
+
+
+
+
+
+// ДИЧЬ С ФОРМОЙ СУБПОДРЯДЧИКОВ
+
+/**
+ * Форма для добавления и редактирования субподрядчиков.
+ */
+function designer_journal_subpodryadchik_form($form, &$form_state, $journal_node) {
+    // Убедимся, что нода передана
+    if (!$journal_node || !isset($journal_node->nid)) {
+        drupal_set_message(t('Нода журнала не найдена.'), 'error');
+        return $form;
+    }
+
+    // Сохраняем ноду в форме
+    $form['#node'] = $journal_node;
+
+    // Поле для одного субподрядчика
+    $form['subpodryadchik'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Субподрядчик'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+    );
+
+    // Поле для организации
+    $form['subpodryadchik']['field_sub_organization'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Организация'),
+        '#default_value' => '',
+    );
+
+    // Поле для выполняемых работ
+    $form['subpodryadchik']['field_vypolnyaemye_raboty'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Выполняемые работы'),
+        '#default_value' => '',
+    );
+
+    // Кнопка для добавления нового субподрядчика
+    $form['add_subpodryadchik'] = array(
+        '#type' => 'submit',
+        '#value' => t('Добавить субподрядчика'),
+    );
+
+    return $form;
+}
+
+/**
+ * Обработчик формы для добавления и редактирования субподрядчиков.
+ */
+function designer_journal_subpodryadchik_form_submit($form, &$form_state) {
+    // Получаем ноду из формы
+    $journal_node = $form['#node'];
+
+    // Проверяем, что нода существует
+    if ($journal_node && isset($journal_node->nid)) {
+        // Получаем данные из формы
+        $organization = isset($form_state['values']['field_sub_organization']) ? $form_state['values']['field_sub_organization'] : '';
+        $works = isset($form_state['values']['field_vypolnyaemye_raboty']) ? $form_state['values']['field_vypolnyaemye_raboty'] : '';
+
+        // Создаем новый элемент в коллекции полей
+        $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_subpodryadchiki'));
+        $field_collection_item->setHostEntity('node', $journal_node);
+        $field_collection_item->field_sub_organization['und'][0]['value'] = $organization;
+        $field_collection_item->field_vypolnyaemye_raboty['und'][0]['value'] = $works;
+
+        // Сохраняем новый элемент
+        $field_collection_item->save();
+
+        // Перезагружаем страницу после добавления
+        $form_state['redirect'] = $_GET['q'];
+    } else {
+        form_set_error('', t('Нода журнала не найдена.'));
+    }
+}
+
+
