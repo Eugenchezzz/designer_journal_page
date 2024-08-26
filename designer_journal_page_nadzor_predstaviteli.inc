@@ -47,13 +47,25 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
     if ($field_collection_item) {
       $item = reset($field_collection_item);
 
+
+        // Форматируем дату из поля field_reg_start_date
+        $start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
+        $formatted_start_date = $start_date ? date('Y-m-d', strtotime($start_date)) : '';
+
+// Форматируем дату из поля field_reg_end_date
+        $end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
+        $formatted_end_date = $end_date ? date('Y-m-d', strtotime($end_date)) : '';
+
+
       $rows[] = array(
         isset($item->field_reg_fio['und'][0]['value']) ? check_plain($item->field_reg_fio['und'][0]['value']) : '',
         isset($item->field_reg_place['und'][0]['value']) ? check_plain($item->field_reg_place['und'][0]['value']) : '',
         isset($item->field_reg_dolzhnost['und'][0]['value']) ? check_plain($item->field_reg_dolzhnost['und'][0]['value']) : '',
         isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
-        isset($item->field_reg_start_date['und'][0]['value']) ? check_plain($item->field_reg_start_date['und'][0]['value']) : '',
-        isset($item->field_reg_end_date['und'][0]['value']) ? check_plain($item->field_reg_end_date['und'][0]['value']) : '',
+          $formatted_start_date,
+          $formatted_end_date,
+
+
       );
     }
   }
@@ -106,20 +118,53 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
     '#default_value' => '',
   );
 
-  $form['field_reg_start_date'] = array(
-    '#type' => 'date',
-    '#title' => t('Дата начала'),
-    '#default_value' => '',
-  );
-
-  $form['field_reg_end_date'] = array(
-    '#type' => 'date',
-    '#title' => t('Дата окончания'),
-    '#default_value' => '',
-  );
 
 
-  $form['submit'] = array(
+
+
+    $form['field_reg_start_date'] = array(
+        '#type' => 'date_popup',
+        '#title' => t('Дата начала'),
+        '#default_value' => !empty($field_collection_item->field_reg_start_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($field_collection_item->field_reg_start_date['und'][0]['value'])),
+                'month' => date('n', strtotime($field_collection_item->field_reg_start_date['und'][0]['value'])),
+                'day' => date('j', strtotime($field_collection_item->field_reg_start_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+    );
+
+    $form['field_reg_end_date'] = array(
+        '#type' => 'date_popup',
+        '#title' => t('Дата окончания'),
+        '#default_value' => !empty($field_collection_item->field_reg_end_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($field_collection_item->field_reg_end_date['und'][0]['value'])),
+                'month' => date('n', strtotime($field_collection_item->field_reg_end_date['und'][0]['value'])),
+                'day' => date('j', strtotime($field_collection_item->field_reg_end_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+    );
+
+
+
+
+
+
+
+
+
+    $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Сохранить'),
   );
@@ -155,14 +200,38 @@ function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state)
   $field_collection_item->field_reg_place['und'][0]['value'] = $form_state['values']['field_reg_place'];
   $field_collection_item->field_reg_dolzhnost['und'][0]['value'] = $form_state['values']['field_reg_dolzhnost'];
   $field_collection_item->field_reg_phone['und'][0]['value'] = $form_state['values']['field_reg_phone'];
-//  $field_collection_item->field_reg_start_date['und'][0]['value'] = $form_state['values']['field_reg_start_date'];
-//  $field_collection_item->field_reg_end_date['und'][0]['value'] = $form_state['values']['field_reg_end_date'];
+
+  //обработка дат
+    // Получаем значения из формы
+    $start_date = isset($form_state['values']['field_reg_start_date']) ? $form_state['values']['field_reg_start_date'] : '';
+    $end_date = isset($form_state['values']['field_reg_end_date']) ? $form_state['values']['field_reg_end_date'] : '';
+
+    // Проверяем наличие обеих дат
+    if (empty($start_date) || empty($end_date)) {
+        // Устанавливаем ошибку в форме
+        if (empty($start_date)) {
+            form_set_error('field_reg_start_date', t('Поле "Дата начала" обязательно для заполнения.'));
+        }
+        if (empty($end_date)) {
+            form_set_error('field_reg_end_date', t('Поле "Дата окончания" обязательно для заполнения.'));
+        }
+
+        // Возвращаем пользователя на ту же страницу с формой
+        $form_state['rebuild'] = TRUE;
+    } else {
+        // Если обе даты присутствуют, сохраняем данные
+        $field_collection_item->field_reg_start_date['und'][0]['value'] = $start_date;
+        $field_collection_item->field_reg_end_date['und'][0]['value'] = $end_date;
+
+        // Вы можете выполнить дополнительные действия, если необходимо
+        // Например, сохранение данных или редирект
+    }
 
 
 
 
 
-  // Сохраняем элемент коллекции
+    // Сохраняем элемент коллекции
   $field_collection_item->save();
 
 
