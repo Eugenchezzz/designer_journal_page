@@ -70,13 +70,13 @@ function designer_journal_page_menu() {
 
 
 
-    //ОПРЕДЕЛЕНИЕ МАРШРУТА УДАЛЕНИЯ ОПРЕДЕЛЕННЫХ ЗАПИСЕЙ КОЛЛЕКЦИЙ ПОЛЕЙ ЖУРНАЛА
+    //ОПРЕДЕЛЕНИЕ МАРШРУТА РЕДАКТИРОВАНИЯ ОПРЕДЕЛЕННЫХ ЗАПИСЕЙ КОЛЛЕКЦИИ СОСТАВА (страница 2)
 
     // Регистрация маршрута
-    $items['objects/edit/%/journal_nadzora/delete_zapis/%/%'] = array(
+    $items['objects/edit/%/journal_nadzora/edit_zapis/field_sostav_rbochei/%'] = array(
         'title' => 'Удаление записи из журнала',
-        'page callback' => 'designer_journal_page_delete_zapis_page', // Обработчик маршрута
-        'page arguments' => array(2,4,5), // Параметры маршрута
+        'page callback' => 'designer_journal_page_edit_zapis_page', // Обработчик маршрута
+        'page arguments' => array(2,6), // Параметры маршрута
         'access callback' => TRUE, // Замените на вашу проверку прав доступа
         'type' => MENU_CALLBACK,
     );
@@ -449,17 +449,3 @@ function designer_journal_subpodryadchik_form_submit($form, &$form_state) {
 }
 
 
-//ОБРАБОТКА МАРШРУТА ПО УДАЛЕНИЮ
-/**
- * Обработчик для удаления записи из журнала.
- */
-function designer_journal_page_delete_zapis_page($object_id, $journal_collection_name, $record_index) {
-    // Ваш код для удаления записи
-    // Здесь просто выводим параметры для проверки
-    $output = '<p>Object ID: ' . check_plain($object_id) . '</p>';
-    $output .= '<p>Journal field collection name: ' . check_plain($journal_collection_name) . '</p>';
-    $output .= '<p>Record Index: ' . check_plain($record_index) . '</p>';
-
-    // Возвращаем вывод
-    return $output;
-}

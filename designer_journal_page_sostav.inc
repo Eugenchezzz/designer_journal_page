@@ -4,6 +4,7 @@
  * Обрабатывает страницу для пути 'objects/edit/%/journal_nadzora/sostav'.
  */
 function designer_journal_page_sostav($object_id) {
+    $index = 0;
     // Проверяем, что пользователь авторизован и имеет необходимые права (если нужно)
     if (!user_access('access content')) {
         drupal_access_denied();
@@ -23,36 +24,61 @@ function designer_journal_page_sostav($object_id) {
     $journal_id = $object_node->field_journal_nadzora_ref['und'][0]['target_id'];
     $journal_node = node_load($journal_id);
 
-    if (!$journal_node || empty($journal_node->field_sostav_rbochei)) {
-        return t('No data available.');
-    }
 
-    // Start building the table
+
     $header = array(
+        t('Номер'),
         t('ФИО'),
         t('Должность, место работы'),
-        t('Работа, по которой осуществяется авторский надзор'),
+        t('Работа, по которой осуществляется авторский надзор'),
         t('Дата и номер приказа о назначении'),
-        t('Действия с записью')
+        t('Действие'),
     );
 
     $rows = array();
 
-    // Loop through the field collection items
     foreach ($journal_node->field_sostav_rbochei['und'] as $item) {
         $field_collection_item = entity_load('field_collection_item', array($item['value']));
         if ($field_collection_item) {
             $item = reset($field_collection_item);
 
+            // Основная строка с данными
             $rows[] = array(
-                isset($item->field_fio['und'][0]['value']) ? check_plain($item->field_fio['und'][0]['value']) : '',
-                isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
-                isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
-                isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
-                t('удалить'),
+                'data' => array(
+                    $item->item_id,
+                    isset($item->field_fio['und'][0]['value']) ? check_plain($item->field_fio['und'][0]['value']) : '',
+                    isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
+                    isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
+                    isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
+                    '<button class="edit-button" data-index="' . $index . '">' . t('Редактировать') . '</button>',
+                ),
+                'id' => 'row-' . $index,
+            );
+            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id);
+            // Скрытая строка с формой
+            $rows[] = array(
+                'data' => array(
+
+                    drupal_render($form),
+                ),
+                'class' => array('edit-form-row'),
+                'id' => 'edit-row-' . $index,
+                'style' => 'display: none;', // Скрываем форму по умолчанию
             );
         }
+        $index++;
     }
+
+    // Добавляем скрипт для обработки кнопки "Редактировать"
+    drupal_add_js("
+        jQuery(document).ready(function($) {
+            $('.edit-button').click(function() {
+                var index = $(this).data('index');
+                $('#row-' + index).hide();
+                $('#edit-row-' + index).show();
+            });
+        });
+    ", 'inline');
 
 
 
@@ -101,19 +127,11 @@ function designer_journal_page_sostav($object_id) {
     
     
 </style>';
-
-
-
-
     $output .= '<h1>' . t('Состав рабочей группы') . '</h1>';
     $output .= theme('table', array('header' => $header, 'rows' => $rows)); // рендер таблицы
-
     $output .= '<h1>' . t('Добавление в состав') . '</h1>';
-
     $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
     $output .= drupal_render($form);
-
-
     return $output;
 }
 
@@ -191,11 +209,6 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
 
     return $form;
 }
-
-
-
-
-
 function designer_journal_sostav_rbochei_form_submit($form, &$form_state) {
     // Получаем ноду журнала
     $journal_node = $form_state['journal_node'];
@@ -216,5 +229,134 @@ function designer_journal_sostav_rbochei_form_submit($form, &$form_state) {
     // Перезагружаем страницу после сохранения
     $form_state['redirect'] = $_GET['q'];
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ДИЧЬ ДЛЯ РЕДАКТИРОВАНИЯ ЗАПИСИ
+
+function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $item_id) {
+
+    $form['container'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+            'class' => array('fields-inline', 'form-inline'),
+            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+        ),
+    );
+
+
+    $form['container']['field_fio'] = array(
+        '#type' => 'textfield',
+        '#title' => t('ФИО'),
+        '#default_value' => isset($item->field_fio['und'][0]['value']) ? $item->field_fio['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_dolzhnost'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Должность, место работы'),
+        '#default_value' => isset($item->field_dolzhnost['und'][0]['value']) ? $item->field_dolzhnost['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_jobname'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Работа, по которой осуществляется авторский надзор'),
+        '#default_value' => isset($item->field_jobname['und'][0]['value']) ? $item->field_jobname['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_datenum'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Дата и номер приказа о назначении'),
+        '#default_value' => isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['item_id'] = array(
+        '#title' => 'айдишник',
+        '#type' => 'hidden',
+        '#default_value' => $item_id,
+    );
+
+
+    $form['container']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Сохранить изменения'),
+        '#attributes' => array(
+            'class' => array('form-submit-inline'),
+            'style' => 'align-self: center !important; margin: 0 !important', // Кнопка занимает 20% ширины контейнера
+        ),
+    );
+
+
+
+
+    dsm($form_state);
+    return $form;
+}
+
+function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
+    dsm($form_state);
+
+    // Получаем данные из формы
+    $item_id = $form_state['values']['item_id'];
+    $field_datenum = $form_state['values']['field_datenum'];
+    $field_dolzhnost = $form_state['values']['field_dolzhnost'];
+    $field_jobname = $form_state['values']['field_jobname'];
+
+    $field_fio = $form_state['values']['field_fio'];
+    // Загружаем объект field_collection_item по ID
+    $field_collection_item = entity_load('field_collection_item', array($item_id));
+    if ($field_collection_item) {
+        $item = reset($field_collection_item);
+        $item->field_fio['und'][0]['value'] = $field_fio;
+        $item->field_dolzhnost['und'][0]['value'] = $field_dolzhnost;
+        $item->field_jobname['und'][0]['value'] = $field_jobname;
+        $item->field_datenum['und'][0]['value'] = $field_datenum;
+
+        // Сохраняем изменения
+        field_attach_update('field_collection_item', $item);
+        entity_save('field_collection_item', $item);
+    }
+
+    // Добавляем сообщение о успешном сохранении
+    drupal_set_message(t('Изменения успешно сохранены.'));
+    drupal_set_message(t($form_state['values']['item_id']));
+    drupal_set_message(t($item_id));
+    $form_state['redirect'] = $_SERVER['REQUEST_URI'];
+}
+
+
+
 
 
