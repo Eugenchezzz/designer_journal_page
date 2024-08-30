@@ -69,9 +69,22 @@ function designer_journal_page_sostav($object_id) {
                 'style' => 'display: none;', // Скрываем форму по умолчанию
             );
         }
+
         $index++;
     }
 
+
+    $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
+    $rows[] = array(
+        'data' => array(
+            array(
+                'data' => drupal_render($form),
+                'colspan' => 6, // Объединяем все колонки
+            ),
+        ),
+        'class' => array('edit-form-row'),
+        'id' => 'edit-row-' . $index,// Скрываем форму по умолчанию
+    );
     // Добавляем скрипт для обработки кнопки "Редактировать"
     drupal_add_js("
         jQuery(document).ready(function($) {
@@ -119,19 +132,20 @@ function designer_journal_page_sostav($object_id) {
     }
 
     .form-item-field-fio {
-        flex: 0 0 15% !important; /* Ширина для field_fio */
+        flex: 0 0 220px !important; /* Ширина для field_fio */
+
     }
 
     .form-item-field-dolzhnost {
-        flex: 0 0 15% !important; /* Ширина для field_dolzhnost */
+        flex: 0 0 17.5%!important; /* Ширина для field_dolzhnost */
     }
 
     .form-item-field-jobname {
-        flex: 0 0 30% !important; /* Ширина для field_jobname */
+        flex: 0 0 35% !important; /* Ширина для field_jobname */
     }
 
     .form-item-field-datenum {
-        flex: 0 0 20% !important; /* Ширина для field_datenum */
+        flex: 0 0 400px !important; /* Ширина для field_datenum */
     }
 
     .form-item input {
@@ -145,14 +159,34 @@ function designer_journal_page_sostav($object_id) {
     }
 
      
-    
+    .table-responsive{
+width: 100% !important;
+}
+
+/* Стилизация таблицы */
+
+
+.table th, .table-custom td {
+    border: 1px solid #ddd !important; /* Граница ячейки таблицы */
+    padding: 8px !important; /* Отступ внутри ячейки */
+    text-align: left !important;
+}
+
+/* Обрезка и перенос текста */
+.table td {
+    max-width: 200px !important; /* Максимальная ширина ячейки, можете настроить */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
+   /* white-space: nowrap !important; /* Не переносит текст на новую строку */
+    word-break: break-word !important; /* Переносит длинные слова */
+}
     
 </style>';
-    $output .= '<h1>' . t('Состав рабочей группы') . '</h1>';
+
     $output .= theme('table', array('header' => $header, 'rows' => $rows)); // рендер таблицы
-    $output .= '<h1>' . t('Добавление в состав') . '</h1>';
-    $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
-    $output .= drupal_render($form);
+
+   // $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
+   // $output .= drupal_render($form);
     return $output;
 }
 
@@ -167,13 +201,13 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 5px', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 
     $form['fields_container']['field_fio'] = array(
         '#type' => 'textfield',
-        '#title' => 'ФИО',
+//        '#title' => 'ФИО',
         '#required' => TRUE,
         '#default_value' => '',
         '#attributes' => array(
@@ -184,7 +218,7 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
 
     $form['fields_container']['field_dolzhnost'] = array(
         '#type' => 'textfield',
-        '#title' => 'Должность, место работы',
+//        '#title' => 'Должность, место работы',
         '#required' => TRUE,
         '#default_value' => '',
         '#attributes' => array(
@@ -195,7 +229,7 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
 
     $form['fields_container']['field_jobname'] = array(
         '#type' => 'textfield',
-        '#title' => 'Работа, по которой осуществляется надзор',
+//        '#title' => 'Работа, по которой осуществляется надзор',
         '#required' => TRUE,
         '#default_value' => '',
         '#attributes' => array(
@@ -206,7 +240,7 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
 
     $form['fields_container']['field_datenum'] = array(
         '#type' => 'textfield',
-        '#title' => 'Дата и номер приказа',
+//        '#title' => 'Дата и номер приказа',
         '#required' => TRUE,
         '#default_value' => '',
         '#attributes' => array(
@@ -216,7 +250,7 @@ function designer_journal_sostav_rbochei_form($form, &$form_state, $journal_node
     );
 
     // Кнопка для сохранения формы
-    $form['fields_container']['submit'] = array(
+    $form['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Добавить'),
         '#attributes' => array(
@@ -278,7 +312,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 5px !important', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 

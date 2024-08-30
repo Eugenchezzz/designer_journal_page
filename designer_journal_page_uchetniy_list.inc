@@ -29,7 +29,7 @@ function designer_journal_page_uchetniy_list($object_id) {
     $journal_node = node_load($journal_id);
 
     // Выводим содержимое страницы
-    $output .= '<h1>' . t('Учетный лист') . '</h1>';
+
 
     // Формируем заголовок таблицы
     $header = array(
@@ -108,15 +108,16 @@ width: 100% !important;
     max-width: 300px !important; /* Максимальная ширина ячейки, можете настроить */
     overflow: hidden !important;
     text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
-    white-space: nowrap !important; /* Не переносит текст на новую строку */
+   /* white-space: nowrap !important; /* Не переносит текст на новую строку */
     word-break: break-word !important; /* Переносит длинные слова */
 }
 
 /* Показ полного текста при наведении */
-.table td:hover {
-    white-space: normal !important; /* Разрешает перенос текста при наведении */
-    background-color: #f5f5f5 !important; /* Изменение фона при наведении */
-}
+/*.table td:hover {
+ /*   white-space: normal !important; /* Разрешает перенос текста при наведении */
+ /*   background-color: #f5f5f5 !important; /* Изменение фона при наведении */
+/*}
+
 
 
 
@@ -180,7 +181,7 @@ width: 100% !important;
 }
 
 .form-item-field-list-zapis-proizvel{
-    width: 10px !important;
+    width: 200px !important;
 }
     
 #designer-journal-page-uchetniy-list-add-form{
@@ -316,7 +317,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
     );
 
     // Кнопка сабмита
-    $form['field_container']['submit'] = array(
+    $form['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Добавить запись'),
         '#attributes' => array(

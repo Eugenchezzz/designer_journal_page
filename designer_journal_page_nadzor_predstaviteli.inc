@@ -24,7 +24,7 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
   $journal_node = node_load($journal_id);
 
   // Выводим содержимое страницы
-  $output .= '<h1>' . t('Регистрация представителей авторского надзора') . '</h1>';
+
 
 
 
@@ -130,20 +130,30 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
         flex: 1 !important; /* Элементы будут занимать пространство в зависимости от установленного flex-basis */
     }
 
-    .form-item-field-fio {
-        flex: 0 0 15% !important; /* Ширина для field_fio */
+    .form-item-field-reg-fio {
+    
+        flex: 0 0 280px !important; /* Ширина для field_fio */
     }
 
-    .form-item-field-dolzhnost {
-        flex: 0 0 15% !important; /* Ширина для field_dolzhnost */
+    .form-item-field-reg-place{
+        flex: 0 0 280px !important; /* Ширина для field_dolzhnost */
     }
 
-    .form-item-field-jobname {
-        flex: 0 0 30% !important; /* Ширина для field_jobname */
+    .form-item-field-reg-dolzhnost {
+        flex: 0 0 280px !important; /* Ширина для field_jobname */
+        
     }
 
-    .form-item-field-datenum {
-        flex: 0 0 20% !important; /* Ширина для field_datenum */
+    .form-item-field-reg-phone {
+        flex: 0 0 270px !important; /* Ширина для field_datenum */
+    }
+    .form-item-field-reg-start-date {
+        flex: 0 0 2px !important; /* Ширина для field_datenum */
+        width: 140px !important;
+    }
+        .form-item-field-reg-end-date {
+        flex: 0 0 2px !important; /* Ширина для field_datenum */
+        width: 140px !important;
     }
 
     .form-item input {
@@ -158,7 +168,27 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
     }
 
      
-    
+    .table-responsive{
+width: 100% !important;
+}
+
+/* Стилизация таблицы */
+
+
+.table th, .table-custom td {
+    border: 1px solid #ddd !important; /* Граница ячейки таблицы */
+    padding: 8px !important; /* Отступ внутри ячейки */
+    text-align: left !important;
+}
+
+/* Обрезка и перенос текста */
+.table td {
+    max-width: 250px !important; /* Максимальная ширина ячейки, можете настроить */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
+   /* white-space: nowrap !important; /* Не переносит текст на новую строку */
+    word-break: break-word !important; /* Переносит длинные слова */
+}
     
 </style>';
   $form = drupal_get_form('designer_journal_predstaviteli_nadzora_form', $journal_node);
@@ -185,31 +215,31 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 5px', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
   // Создаем форму с пустыми значениями по умолчанию
   $form['fields_container']['field_reg_fio'] = array(
     '#type' => 'textfield',
-    '#title' => t('ФИО'),
+//    '#title' => t('ФИО'),
     '#default_value' => '',
   );
 
   $form['fields_container']['field_reg_place'] = array(
     '#type' => 'textfield',
-    '#title' => t('Место'),
+//    '#title' => t('Место'),
     '#default_value' => '',
   );
 
   $form['fields_container']['field_reg_dolzhnost'] = array(
     '#type' => 'textfield',
-    '#title' => t('Должность'),
+//    '#title' => t('Должность'),
     '#default_value' => '',
   );
 
   $form['fields_container']['field_reg_phone'] = array(
     '#type' => 'textfield',
-    '#title' => t('Телефон'),
+//    '#title' => t('Телефон'),
     '#default_value' => '',
   );
 
@@ -219,7 +249,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
     $form['fields_container']['field_reg_start_date'] = array(
         '#type' => 'date_popup',
-        '#title' => t('Дата начала'),
+//        '#title' => t('Дата начала'),
         '#default_value' => !empty($field_collection_item->field_reg_start_date['und'][0]['value'])
             ? array(
                 'year' => date('Y', strtotime($field_collection_item->field_reg_start_date['und'][0]['value'])),
@@ -236,7 +266,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
     $form['fields_container']['field_reg_end_date'] = array(
         '#type' => 'date_popup',
-        '#title' => t('Дата окончания'),
+//        '#title' => t('Дата окончания'),
         '#default_value' => !empty($field_collection_item->field_reg_end_date['und'][0]['value'])
             ? array(
                 'year' => date('Y', strtotime($field_collection_item->field_reg_end_date['und'][0]['value'])),
@@ -259,7 +289,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
 
 
-    $form['fields_container']['submit'] = array(
+    $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Добавить'),
   );
