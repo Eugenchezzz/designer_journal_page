@@ -27,7 +27,7 @@ function designer_journal_page_sostav($object_id) {
 
 
     $header = array(
-        t('Номер'),
+
         t('ФИО'),
         t('Должность, место работы'),
         t('Работа, по которой осуществляется авторский надзор'),
@@ -45,7 +45,7 @@ function designer_journal_page_sostav($object_id) {
             // Основная строка с данными
             $rows[] = array(
                 'data' => array(
-                    $item->item_id,
+
                     isset($item->field_fio['und'][0]['value']) ? check_plain($item->field_fio['und'][0]['value']) : '',
                     isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
@@ -58,8 +58,10 @@ function designer_journal_page_sostav($object_id) {
             // Скрытая строка с формой
             $rows[] = array(
                 'data' => array(
-
-                    drupal_render($form),
+                    array(
+                        'data' => drupal_render($form),
+                        'colspan' => 6, // Объединяем все колонки
+                    ),
                 ),
                 'class' => array('edit-form-row'),
                 'id' => 'edit-row-' . $index,
@@ -91,6 +93,24 @@ function designer_journal_page_sostav($object_id) {
 
     // Выводим содержимое страницы
     $output .= '<style>
+
+.edit-form-row td {
+    padding: 0;
+    margin: 0;
+}
+
+.edit-form-row form {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+
+
+
+
+
+
     .form-item {
         margin: 0 !important;
         padding: 0 !important;
@@ -264,7 +284,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
     $form['container']['field_fio'] = array(
         '#type' => 'textfield',
-        '#title' => t('ФИО'),
+
         '#default_value' => isset($item->field_fio['und'][0]['value']) ? $item->field_fio['und'][0]['value'] : '',
         '#attributes' => array(
             'class' => array('form-field-inline'),
@@ -274,7 +294,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
     $form['container']['field_dolzhnost'] = array(
         '#type' => 'textfield',
-        '#title' => t('Должность, место работы'),
+
         '#default_value' => isset($item->field_dolzhnost['und'][0]['value']) ? $item->field_dolzhnost['und'][0]['value'] : '',
         '#attributes' => array(
             'class' => array('form-field-inline'),
@@ -284,7 +304,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
     $form['container']['field_jobname'] = array(
         '#type' => 'textfield',
-        '#title' => t('Работа, по которой осуществляется авторский надзор'),
+
         '#default_value' => isset($item->field_jobname['und'][0]['value']) ? $item->field_jobname['und'][0]['value'] : '',
         '#attributes' => array(
             'class' => array('form-field-inline'),
@@ -294,7 +314,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
     $form['container']['field_datenum'] = array(
         '#type' => 'textfield',
-        '#title' => t('Дата и номер приказа о назначении'),
+
         '#default_value' => isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '',
         '#attributes' => array(
             'class' => array('form-field-inline'),
@@ -303,7 +323,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
     );
 
     $form['container']['item_id'] = array(
-        '#title' => 'айдишник',
+
         '#type' => 'hidden',
         '#default_value' => $item_id,
     );
@@ -321,12 +341,12 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
 
 
-    dsm($form_state);
+
     return $form;
 }
 
 function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
-    dsm($form_state);
+
 
     // Получаем данные из формы
     $item_id = $form_state['values']['item_id'];

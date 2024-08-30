@@ -37,11 +37,13 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
     t('Номер телефона'),
     t('Дата приезда'),
     t('Дата отъезда'),
+    t('Действие'),
   );
 
   $rows = array();
 
   // цикл записи в табличку для отображения
+    $index = 0;
   foreach ($journal_node->field_predstaviteli_nadzora['und'] as $item) {
     $field_collection_item = entity_load('field_collection_item', array($item['value']));
     if ($field_collection_item) {
@@ -58,22 +60,107 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
 
       $rows[] = array(
-        isset($item->field_reg_fio['und'][0]['value']) ? check_plain($item->field_reg_fio['und'][0]['value']) : '',
-        isset($item->field_reg_place['und'][0]['value']) ? check_plain($item->field_reg_place['und'][0]['value']) : '',
-        isset($item->field_reg_dolzhnost['und'][0]['value']) ? check_plain($item->field_reg_dolzhnost['und'][0]['value']) : '',
-        isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
-          $formatted_start_date,
-          $formatted_end_date,
-
-
+          'data' => array(
+           isset($item->field_reg_fio['und'][0]['value']) ? check_plain($item->field_reg_fio['und'][0]['value']) : '',
+           isset($item->field_reg_place['und'][0]['value']) ? check_plain($item->field_reg_place['und'][0]['value']) : '',
+           isset($item->field_reg_dolzhnost['und'][0]['value']) ? check_plain($item->field_reg_dolzhnost['und'][0]['value']) : '',
+           isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
+           $formatted_start_date,
+           $formatted_end_date,
+           '<button class="edit-button" data-index="' . $index . '">' . t('Редактировать') . '</button>',
+       ),
+          'id' => 'row-' . $index,
       );
+
+        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id);
+        // Скрытая строка с формой
+        $rows[] = array(
+            'data' => array(
+                array(
+                    'data' => drupal_render($form),
+                    'colspan' => 7, // Объединяем все колонки
+                ),
+            ),
+            'class' => array('edit-form-row'),
+            'id' => 'edit-row-' . $index,
+            'style' => 'display: none;', // Скрываем форму по умолчанию
+        );
+
+
     }
+    $index++;
+      drupal_add_js("
+        jQuery(document).ready(function($) {
+            $('.edit-button').click(function() {
+                var index = $(this).data('index');
+                $('#row-' + index).hide();
+                $('#edit-row-' + index).show();
+            });
+        });
+    ", 'inline');
+
+
   }
 
   // Render the table
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
 
+    $output .= '<style>
 
+.edit-form-row td {
+    padding: 0;
+    margin: 0;
+}
+
+.edit-form-row form {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+
+
+
+
+
+
+    .form-item {
+        margin: 0 !important;
+        padding: 0 !important;
+        flex: 1 !important; /* Элементы будут занимать пространство в зависимости от установленного flex-basis */
+    }
+
+    .form-item-field-fio {
+        flex: 0 0 15% !important; /* Ширина для field_fio */
+    }
+
+    .form-item-field-dolzhnost {
+        flex: 0 0 15% !important; /* Ширина для field_dolzhnost */
+    }
+
+    .form-item-field-jobname {
+        flex: 0 0 30% !important; /* Ширина для field_jobname */
+    }
+
+    .form-item-field-datenum {
+        flex: 0 0 20% !important; /* Ширина для field_datenum */
+    }
+
+    .form-item input {
+        width: 100% !important; /* Поле ввода занимает всю ширину своего контейнера */
+        box-sizing: border-box !important; /* Учитываем padding и border в ширину элемента */
+        margin-right: 0 !important; /* Убираем отступы справа */
+        
+    }
+
+    .container {
+        display: flex !important; /* Используем flexbox для расположения дочерних элементов */
+    }
+
+     
+    
+    
+</style>';
   $form = drupal_get_form('designer_journal_predstaviteli_nadzora_form', $journal_node);
   $output .= drupal_render($form);
 
@@ -93,26 +180,34 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
  * Функция для создания формы добавления данных в коллекцию полей field_predstaviteli_nadzora.
  */
 function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journal_node) {
+
+    $form['fields_container'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+            'class' => array('fields-inline', 'form-inline'),
+            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+        ),
+    );
   // Создаем форму с пустыми значениями по умолчанию
-  $form['field_reg_fio'] = array(
+  $form['fields_container']['field_reg_fio'] = array(
     '#type' => 'textfield',
     '#title' => t('ФИО'),
     '#default_value' => '',
   );
 
-  $form['field_reg_place'] = array(
+  $form['fields_container']['field_reg_place'] = array(
     '#type' => 'textfield',
     '#title' => t('Место'),
     '#default_value' => '',
   );
 
-  $form['field_reg_dolzhnost'] = array(
+  $form['fields_container']['field_reg_dolzhnost'] = array(
     '#type' => 'textfield',
     '#title' => t('Должность'),
     '#default_value' => '',
   );
 
-  $form['field_reg_phone'] = array(
+  $form['fields_container']['field_reg_phone'] = array(
     '#type' => 'textfield',
     '#title' => t('Телефон'),
     '#default_value' => '',
@@ -122,7 +217,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
 
 
-    $form['field_reg_start_date'] = array(
+    $form['fields_container']['field_reg_start_date'] = array(
         '#type' => 'date_popup',
         '#title' => t('Дата начала'),
         '#default_value' => !empty($field_collection_item->field_reg_start_date['und'][0]['value'])
@@ -139,7 +234,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
         '#date_format' => 'Y-m-d', // Это должно убрать поле времени
     );
 
-    $form['field_reg_end_date'] = array(
+    $form['fields_container']['field_reg_end_date'] = array(
         '#type' => 'date_popup',
         '#title' => t('Дата окончания'),
         '#default_value' => !empty($field_collection_item->field_reg_end_date['und'][0]['value'])
@@ -164,9 +259,9 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
 
 
-    $form['submit'] = array(
+    $form['fields_container']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Сохранить'),
+    '#value' => t('Добавить'),
   );
 
   // Передаем узел журнала в форму
@@ -244,5 +339,139 @@ function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state)
 }
 
 
+// ОБРАБОТЧИКИ РЕДАКТИРОВАНИЯ ДАННЫХ
 
 
+
+
+function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id){
+    $form['container'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+            'class' => array('fields-inline', 'form-inline'),
+            'style' => 'display: flex; align-items: center; gap: 20px; flex-wrap: wrap;', // Flex-wrap для переноса на новую строку при нехватке места
+        ),
+    );
+
+    $form['container']['field_reg_fio'] = array(
+        '#type' => 'textfield',
+        '#default_value' => isset($item->field_reg_fio['und'][0]['value']) ? $item->field_reg_fio['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_reg_place'] = array(
+        '#type' => 'textfield',
+        '#default_value' => isset($item->field_reg_place['und'][0]['value']) ? $item->field_reg_place['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_reg_dolzhnost'] = array(
+        '#type' => 'textfield',
+        '#default_value' => isset($item->field_reg_dolzhnost['und'][0]['value']) ? $item->field_reg_dolzhnost['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_reg_phone'] = array(
+        '#type' => 'textfield',
+        '#default_value' => isset($item->field_reg_phone['und'][0]['value']) ? $item->field_reg_phone['und'][0]['value'] : '',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_reg_start_date'] = array(
+        '#type' => 'date_popup',
+
+        '#default_value' => !empty($item->field_reg_start_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($item->field_reg_start_date['und'][0]['value'])),
+                'month' => date('n', strtotime($item->field_reg_start_date['und'][0]['value'])),
+                'day' => date('j', strtotime($item->field_reg_start_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это убирает поле времени
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['field_reg_end_date'] = array(
+        '#type' => 'date_popup',
+
+        '#default_value' => !empty($item->field_reg_end_date['und'][0]['value'])
+            ? array(
+                'year' => date('Y', strtotime($item->field_reg_end_date['und'][0]['value'])),
+                'month' => date('n', strtotime($item->field_reg_end_date['und'][0]['value'])),
+                'day' => date('j', strtotime($item->field_reg_end_date['und'][0]['value']))
+            )
+            : array('year' => '', 'month' => '', 'day' => ''),
+        '#date_date_element' => 'date',
+        '#date_month_element' => 'month',
+        '#date_year_element' => 'year',
+        '#date_day_element' => 'day',
+        '#date_format' => 'Y-m-d', // Это убирает поле времени
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['container']['item_id'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $item_id,
+    );
+
+    $form['container']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Сохранить изменения'),
+        '#attributes' => array(
+            'class' => array('form-submit-inline', 'btn', 'btn-sm'),
+            'style' => 'align-self: center !important; margin: 0 !important; padding: 5px 10px; font-size: 12px;', // Уменьшенная кнопка
+        ),
+    );
+
+    return $form;
+}
+
+function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
+{
+    // Получаем значение item_id из скрытого поля
+    $item_id = $form_state['values']['item_id'];
+
+    // Загружаем элемент коллекции по item_id
+    $field_collection_item = entity_load('field_collection_item', array($item_id));
+    if ($field_collection_item) {
+        $item = reset($field_collection_item);
+
+        // Обновляем значения полей в элементе коллекции
+        $item->field_reg_fio['und'][0]['value'] = $form_state['values']['field_reg_fio'];
+        $item->field_reg_place['und'][0]['value'] = $form_state['values']['field_reg_place'];
+        $item->field_reg_dolzhnost['und'][0]['value'] = $form_state['values']['field_reg_dolzhnost'];
+        $item->field_reg_phone['und'][0]['value'] = $form_state['values']['field_reg_phone'];
+        $item->field_reg_start_date['und'][0]['value'] = $form_state['values']['field_reg_start_date'];
+        $item->field_reg_end_date['und'][0]['value'] = $form_state['values']['field_reg_end_date'];
+
+        // Сохраняем изменения
+        $item->save();
+    }
+
+    // Устанавливаем сообщение об успешном сохранении
+    drupal_set_message(t('Данные успешно обновлены.'));
+
+    // Перенаправляем на нужную страницу (например, на текущую страницу
+}
