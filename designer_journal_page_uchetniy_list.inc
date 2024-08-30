@@ -46,14 +46,19 @@ function designer_journal_page_uchetniy_list($object_id) {
     $rows = array();
 
     // Проходимся по элементам коллекции полей
+
     foreach ($journal_node->field_uchetniy_list['und'] as $item) {
         $field_collection_item = entity_load('field_collection_item', array($item['value']));
         if ($field_collection_item) {
             $item = reset($field_collection_item);
 
+            // Извлечение даты (только дата без времени)
+            $date_value = isset($item->field_list_date['und'][0]['value']) ? $item->field_list_date['und'][0]['value'] : '';
+            $date_only = !empty($date_value) ? date('Y-m-d', strtotime($date_value)) : '';
+
             // Формируем строку для таблицы
             $rows[] = array(
-                isset($item->field_list_date['und'][0]['value']) ? check_plain($item->field_list_date['und'][0]['value']) : '',
+                check_plain($date_only),
                 isset($item->field_list_narushenija['und'][0]['value']) ? check_plain($item->field_list_narushenija['und'][0]['value']) : '',
                 isset($item->field_list_ukazanija['und'][0]['value']) ? check_plain($item->field_list_ukazanija['und'][0]['value']) : '',
                 isset($item->field_list_zapis_proizvel['und'][0]['value']) ? check_plain($item->field_list_zapis_proizvel['und'][0]['value']) : '',
@@ -65,8 +70,10 @@ function designer_journal_page_uchetniy_list($object_id) {
         }
     }
 
+
     // Рендерим таблицу
-    $output .= theme('table', array('header' => $header, 'rows' => $rows));
+    $table = theme('table', array('header' => $header, 'rows' => $rows));
+    $output .= '<div class="table-left">' . $table . '</div>';
 
     // Добавляем форму добавления новой записи
     $output .= '<style>
@@ -81,6 +88,36 @@ function designer_journal_page_uchetniy_list($object_id) {
     display: flex;
     align-items: center;
 }
+
+
+.table-responsive{
+width: 100% !important;
+}
+
+/* Стилизация таблицы */
+
+
+.table th, .table-custom td {
+    border: 1px solid #ddd !important; /* Граница ячейки таблицы */
+    padding: 8px !important; /* Отступ внутри ячейки */
+    text-align: left !important;
+}
+
+/* Обрезка и перенос текста */
+.table td {
+    max-width: 300px !important; /* Максимальная ширина ячейки, можете настроить */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
+    white-space: nowrap !important; /* Не переносит текст на новую строку */
+    word-break: break-word !important; /* Переносит длинные слова */
+}
+
+/* Показ полного текста при наведении */
+.table td:hover {
+    white-space: normal !important; /* Разрешает перенос текста при наведении */
+    background-color: #f5f5f5 !important; /* Изменение фона при наведении */
+}
+
 
 
 
@@ -130,6 +167,32 @@ function designer_journal_page_uchetniy_list($object_id) {
      
     
     
+    
+    .table-left {
+    width: 90%; /* Установите ширину элемента, если необходимо */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.form-item-field-list-date{
+
+     width: 150px !important;
+}
+
+.form-item-field-list-zapis-proizvel{
+    width: 10px !important;
+}
+    
+#designer-journal-page-uchetniy-list-add-form{
+  
+     display: inline-block;
+    width: 80%; /* Установите ширину контента, если необходимо */
+    max-width: 1200px;
+   }
+#block-system-main{
+ text-align: center !important; /* Центрирование содержимого по горизонтали */
+}
+
 </style>';
       $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
       $output .= drupal_render($form);
@@ -164,7 +227,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
                 // Проверяем, есть ли уже такое ФИО в массиве
                 if (!in_array($fio_value, $fio_variants)) {
                     // Добавляем ФИО в массив, если оно не встречается
-                    $fio_variants[$index] = $fio_value;
+                    $fio_variants[$fio_value] = $fio_value;
                     $index++;
                 }
             }
@@ -282,9 +345,7 @@ function designer_journal_page_uchetniy_list_add_form_submit($form, &$form_state
         $instructions = isset($form_state['values']['field_list_ukazanija']) ? $form_state['values']['field_list_ukazanija'] : '';
         $record_by = isset($form_state['values']['field_list_zapis_proizvel']) ? $form_state['values']['field_list_zapis_proizvel'] : '';
 
-        // Преобразуем массив даты в строку формата Y-m-d
-        $date_value = !empty($date['year']) && !empty($date['month']) && !empty($date['day']) ?
-            sprintf('%04d-%02d-%02d', $date['year'], $date['month'], $date['day']) : '';
+
 
         // Создаем новый элемент коллекции полей для учетного листа
         $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_uchetniy_list'));

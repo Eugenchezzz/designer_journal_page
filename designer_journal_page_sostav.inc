@@ -50,7 +50,8 @@ function designer_journal_page_sostav($object_id) {
                     isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
                     isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
-                    '<button class="edit-button" data-index="' . $index . '">' . t('Редактировать') . '</button>',
+                    '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+
                 ),
                 'id' => 'row-' . $index,
             );
