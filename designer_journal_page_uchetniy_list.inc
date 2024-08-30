@@ -78,16 +78,35 @@ function designer_journal_page_uchetniy_list($object_id) {
     // Добавляем форму добавления новой записи
     $output .= '<style>
 
-.edit-form-row td {
-    padding: 0;
-    margin: 0;
+
+
+
+
+
+/* Стилизация таблицы */
+.table th, .table td {
+   
+    padding: 8px !important; /* Отступ внутри ячейки */
+    text-align: left !important;
 }
 
-.edit-form-row form {
-    width: 100%;
-    display: flex;
-    align-items: center;
+/* Обрезка и перенос текста */
+.table td {
+    width: 100px !important; /* Статическая ширина ячейки */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
+    word-break: break-word !important; /* Переносит длинные слова */
 }
+
+/* Ширина ячеек последнего столбца */
+.table td:last-child {
+    width: 10px !important; /* Статическая ширина для последнего столбца */
+}
+
+
+
+
+
 
 
 .table-responsive{
@@ -105,7 +124,7 @@ width: 100% !important;
 
 /* Обрезка и перенос текста */
 .table td {
-    max-width: 300px !important; /* Максимальная ширина ячейки, можете настроить */
+    width: 300px !important; /* Максимальная ширина ячейки, можете настроить */
     overflow: hidden !important;
     text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
    /* white-space: nowrap !important; /* Не переносит текст на новую строку */
@@ -126,73 +145,7 @@ width: 100% !important;
 
 
 
-    .form-item {
-        margin: 0 !important;
-        padding: 0 !important;
-        flex: 1 !important; /* Элементы будут занимать пространство в зависимости от установленного flex-basis */
-    }
 
-    .form-item-field-fio {
-        flex: 0 0 15% !important; /* Ширина для field_fio */
-    }
-
-    .form-item-field-dolzhnost {
-        flex: 0 0 15% !important; /* Ширина для field_dolzhnost */
-    }
-
-    .form-item-field-list-narushenija {
-        flex: 0 0 10% !important; /* Ширина для field_jobname */
-        width: 20%;
-
-    }
-    .form-item-field-list-ukazanija {
-        flex: 0 0 10% !important; /* Ширина для field_jobname */
-        width: 20%;
-
-    }
-
-    .form-item-field-datenum {
-        flex: 0 0 20% !important; /* Ширина для field_datenum */
-    }
-
-    .form-item input {
-        width: 100% !important; /* Поле ввода занимает всю ширину своего контейнера */
-        box-sizing: border-box !important; /* Учитываем padding и border в ширину элемента */
-        margin-right: 0 !important; /* Убираем отступы справа */
-    }
-
-    .container {
-        display: flex !important; /* Используем flexbox для расположения дочерних элементов */
-    }
-
-     
-    
-    
-    
-    .table-left {
-    width: 90%; /* Установите ширину элемента, если необходимо */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.form-item-field-list-date{
-
-     width: 150px !important;
-}
-
-.form-item-field-list-zapis-proizvel{
-    width: 200px !important;
-}
-    
-#designer-journal-page-uchetniy-list-add-form{
-  
-     display: inline-block;
-    width: 80%; /* Установите ширину контента, если необходимо */
-    max-width: 1200px;
-   }
-#block-system-main{
- text-align: center !important; /* Центрирование содержимого по горизонтали */
-}
 
 </style>';
       $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
@@ -257,7 +210,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 20px', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 5px; flex-warp: warp !important; max-width: 90vw !important', // Flex-wrap для переноса на новую строку при нехватке места
         ),
 
     );
@@ -290,7 +243,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#required' => TRUE,
         '#attributes' => array(
             'class' => array('form-field-inline'),
-            'style' => 'margin-right: 10px;',
+            'style' => 'margin-right: 10px; ',
         ),
 
     );
@@ -309,6 +262,43 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#type' => 'select',
         '#title' => t('Запись произвел'),
        '#options' => $fio_variants,
+        '#required' => TRUE,
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+
+    $form['field_container']['field_list_oznak_org'] = array(
+        '#type' => 'textfield',
+        '#title' => t('ознакомлен представитель организации'),
+        '#required' => TRUE,
+        '#attributes' => array(
+        'class' => array('form-field-inline'),
+        'style' => 'margin-right: 10px;',
+        ),
+    );
+    $form['field_container']['field_list_oznak_zak'] = array(
+        '#type' => 'textfield',
+        '#title' => t('ознакомлен заказчик'),
+        '#required' => TRUE,
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+    $form['field_container']['field_list_otmetka_ukaz_proizv'] = array(
+        '#type' => 'textfield',
+        '#title' => t('отметка о выполнении указаний от производителя'),
+        '#required' => TRUE,
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
+    $form['field_container']['field_list_otmetka_ukaz_predst'] = array(
+        '#type' => 'textfield',
+        '#title' => t('отметка о выполнении указаний от представителя'),
         '#required' => TRUE,
         '#attributes' => array(
             'class' => array('form-field-inline'),

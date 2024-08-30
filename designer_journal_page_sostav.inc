@@ -51,11 +51,12 @@ function designer_journal_page_sostav($object_id) {
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
                     isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
                     '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+//
 
                 ),
                 'id' => 'row-' . $index,
             );
-            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id);
+            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id, $index);
             // Скрытая строка с формой
             $rows[] = array(
                 'data' => array(
@@ -132,20 +133,20 @@ function designer_journal_page_sostav($object_id) {
     }
 
     .form-item-field-fio {
-        flex: 0 0 220px !important; /* Ширина для field_fio */
+        flex: 0 0 390px !important; /* Ширина для field_fio */
 
     }
 
     .form-item-field-dolzhnost {
-        flex: 0 0 17.5%!important; /* Ширина для field_dolzhnost */
+        flex: 0 0 390px !important; /* Ширина для field_dolzhnost */
     }
 
     .form-item-field-jobname {
-        flex: 0 0 35% !important; /* Ширина для field_jobname */
+        flex: 0 0 390px !important; /* Ширина для field_jobname */
     }
 
     .form-item-field-datenum {
-        flex: 0 0 400px !important; /* Ширина для field_datenum */
+        flex: 0 0 390px !important; /* Ширина для field_datenum */
     }
 
     .form-item input {
@@ -159,27 +160,34 @@ function designer_journal_page_sostav($object_id) {
     }
 
      
-    .table-responsive{
-width: 100% !important;
+.table-responsive {
+    width: 100% !important;
 }
 
 /* Стилизация таблицы */
-
-
-.table th, .table-custom td {
-    border: 1px solid #ddd !important; /* Граница ячейки таблицы */
+.table th, .table td {
+     /* Граница ячейки таблицы */
     padding: 8px !important; /* Отступ внутри ячейки */
     text-align: left !important;
 }
 
 /* Обрезка и перенос текста */
 .table td {
-    max-width: 200px !important; /* Максимальная ширина ячейки, можете настроить */
+    width: 400px !important; /* Статическая ширина ячейки */
     overflow: hidden !important;
     text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
-   /* white-space: nowrap !important; /* Не переносит текст на новую строку */
     word-break: break-word !important; /* Переносит длинные слова */
 }
+
+/* Ширина ячеек последнего столбца */
+.table td:last-child {
+    width: 5px !important; /* Статическая ширина для последнего столбца */
+}
+
+#block-system-main {
+    width: 100% !important;
+}
+
     
 </style>';
 
@@ -306,13 +314,13 @@ function designer_journal_sostav_rbochei_form_submit($form, &$form_state) {
 
 // ДИЧЬ ДЛЯ РЕДАКТИРОВАНИЯ ЗАПИСИ
 
-function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $item_id) {
+function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $item_id, $index) {
 
     $form['container'] = array(
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 5px !important', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 1px !important', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 
@@ -365,13 +373,14 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
 
     $form['container']['submit'] = array(
-        '#type' => 'submit',
-        '#value' => t('Сохранить изменения'),
-        '#attributes' => array(
-            'class' => array('form-submit-inline'),
-            'style' => 'align-self: center !important; margin: 0 !important', // Кнопка занимает 20% ширины контейнера
-        ),
+        '#type' => 'markup',
+        '#markup' => '<button class="btn btn-default form-submit" style="align-self: center; margin: 0;" data-index="' . $index . '">
+                    <span class="icon glyphicon glyphicon-ok" aria-hidden="true"></span>
+                  </button>',
+        '#prefix' => '<div class="form-item">',
+        '#suffix' => '</div>',
     );
+
 
 
 

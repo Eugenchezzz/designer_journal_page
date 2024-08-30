@@ -72,7 +72,7 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
           'id' => 'row-' . $index,
       );
 
-        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id);
+        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id, $index);
         // Скрытая строка с формой
         $rows[] = array(
             'data' => array(
@@ -374,12 +374,12 @@ function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state)
 
 
 
-function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id){
+function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id,$index){
     $form['container'] = array(
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex; align-items: center; gap: 20px; flex-wrap: wrap;', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex; align-items: center; gap: 20px;', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 
@@ -467,12 +467,12 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
     );
 
     $form['container']['submit'] = array(
-        '#type' => 'submit',
-        '#value' => t('Сохранить изменения'),
-        '#attributes' => array(
-            'class' => array('form-submit-inline', 'btn', 'btn-sm'),
-            'style' => 'align-self: center !important; margin: 0 !important; padding: 5px 10px; font-size: 12px;', // Уменьшенная кнопка
-        ),
+        '#type' => 'markup',
+        '#markup' => '<button class="btn btn-default form-submit" style="align-self: center; margin: 0;" data-index="' . $index . '">
+                    <span class="icon glyphicon glyphicon-ok" aria-hidden="true"></span>
+                  </button>',
+        '#prefix' => '<div class="form-item">',
+        '#suffix' => '</div>',
     );
 
     return $form;
