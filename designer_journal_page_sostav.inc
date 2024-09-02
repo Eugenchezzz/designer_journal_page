@@ -5,10 +5,14 @@
  */
 function designer_journal_page_sostav($object_id) {
     $index = 0;
-    // Проверяем, что пользователь авторизован и имеет необходимые права (если нужно)
-    if (!user_access('access content')) {
-        drupal_access_denied();
-        return;
+
+    // сразу проверяем, кто запрашивает страницу, проектировщик и админ - ОК.
+    global $user;
+    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('Администратор', array_values($user->roles))) {
+        drupal_set_message('Доступ к журналу авторского надзора разрешен только для проектировщиков.', 'error');
+        // Возвращаемся на предыдущую страницу
+        drupal_goto($_SERVER['HTTP_REFERER']);
+        return; // Прерываем выполнение текущей функции
     }
 
     // Подключаем содержимое HTML-файла sec_header1.html
@@ -372,13 +376,9 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
     );
 
 
-    $form['container']['submit'] = array(
-        '#type' => 'markup',
-        '#markup' => '<button class="btn btn-default form-submit" style="align-self: center; margin: 0;" data-index="' . $index . '">
-                    <span class="icon glyphicon glyphicon-ok" aria-hidden="true"></span>
-                  </button>',
-        '#prefix' => '<div class="form-item">',
-        '#suffix' => '</div>',
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
     );
 
 

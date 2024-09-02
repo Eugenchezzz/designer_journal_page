@@ -4,12 +4,14 @@
  * Обрабатывает страницу для пути 'objects/edit/%/journal_nadzora/sostav'.
  */
 function designer_journal_page_nadzor_predstaviteli($object_id) {
-  // Проверяем, что пользователь авторизован и имеет необходимые права (если нужно)
-  if (!user_access('access content')) {
-    drupal_access_denied();
-    return;
-  }
-
+    // сразу проверяем, кто запрашивает страницу, проектировщик и админ - ОК.
+    global $user;
+    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('Администратор', array_values($user->roles))) {
+        drupal_set_message('Доступ к журналу авторского надзора разрешен только для проектировщиков.', 'error');
+        // Возвращаемся на предыдущую страницу
+        drupal_goto($_SERVER['HTTP_REFERER']);
+        return; // Прерываем выполнение текущей функции
+    }
   // Подключаем содержимое HTML-файла sec_header1.html
   $sec_header_path = drupal_get_path('module', 'designer_journal_page') . '/templates/sec_header3.html';
   $sec_header = file_get_contents($sec_header_path);
@@ -132,28 +134,28 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
     .form-item-field-reg-fio {
     
-        flex: 0 0 280px !important; /* Ширина для field_fio */
+        flex: 0 0 260px !important; /* Ширина для field_fio */
     }
 
     .form-item-field-reg-place{
-        flex: 0 0 280px !important; /* Ширина для field_dolzhnost */
+        flex: 0 0 260px !important; /* Ширина для field_dolzhnost */
     }
 
     .form-item-field-reg-dolzhnost {
-        flex: 0 0 280px !important; /* Ширина для field_jobname */
+        flex: 0 0 260px !important; /* Ширина для field_jobname */
         
     }
 
     .form-item-field-reg-phone {
-        flex: 0 0 270px !important; /* Ширина для field_datenum */
+        flex: 0 0 250px !important; /* Ширина для field_datenum */
     }
     .form-item-field-reg-start-date {
         flex: 0 0 2px !important; /* Ширина для field_datenum */
-        width: 140px !important;
+        width: 260px !important;
     }
         .form-item-field-reg-end-date {
         flex: 0 0 2px !important; /* Ширина для field_datenum */
-        width: 140px !important;
+        width: 260px !important;
     }
 
     .form-item input {
@@ -166,7 +168,9 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
     .container {
         display: flex !important; /* Используем flexbox для расположения дочерних элементов */
     }
-
+    #edit-fields-container {
+    left: 10px !important;
+    }
      
     .table-responsive{
 width: 100% !important;
@@ -176,18 +180,21 @@ width: 100% !important;
 
 
 .table th, .table-custom td {
-    border: 1px solid #ddd !important; /* Граница ячейки таблицы */
-    padding: 8px !important; /* Отступ внутри ячейки */
+   
+    padding: 5px !important; /* Отступ внутри ячейки */
     text-align: left !important;
 }
 
 /* Обрезка и перенос текста */
 .table td {
-    max-width: 250px !important; /* Максимальная ширина ячейки, можете настроить */
+    width: 250px !important; /* Максимальная ширина ячейки, можете настроить */
     overflow: hidden !important;
     text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
    /* white-space: nowrap !important; /* Не переносит текст на новую строку */
     word-break: break-word !important; /* Переносит длинные слова */
+}
+.table td:last-child {
+    width: 5px !important; /* Статическая ширина для последнего столбца */
 }
     
 </style>';
@@ -466,13 +473,9 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#default_value' => $item_id,
     );
 
-    $form['container']['submit'] = array(
-        '#type' => 'markup',
-        '#markup' => '<button class="btn btn-default form-submit" style="align-self: center; margin: 0;" data-index="' . $index . '">
-                    <span class="icon glyphicon glyphicon-ok" aria-hidden="true"></span>
-                  </button>',
-        '#prefix' => '<div class="form-item">',
-        '#suffix' => '</div>',
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
     );
 
     return $form;

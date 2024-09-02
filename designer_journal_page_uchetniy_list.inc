@@ -7,10 +7,13 @@
  * Обрабатывает страницу для пути 'objects/edit/%/journal_nadzora/uchetniy_list'.
  */
 function designer_journal_page_uchetniy_list($object_id) {
-    // Проверяем, что пользователь авторизован и имеет необходимые права (если нужно)
-    if (!user_access('access content')) {
-        drupal_access_denied();
-        return;
+    // сразу проверяем, кто запрашивает страницу, проектировщик и админ - ОК.
+    global $user;
+    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('Администратор', array_values($user->roles))) {
+        drupal_set_message('Доступ к журналу авторского надзора разрешен только для проектировщиков.', 'error');
+        // Возвращаемся на предыдущую страницу
+        drupal_goto($_SERVER['HTTP_REFERER']);
+        return; // Прерываем выполнение текущей функции
     }
 
     // Подключаем содержимое HTML-файла sec_header1.html
@@ -139,6 +142,12 @@ width: 100% !important;
 
 
 
+ */
+.fields-inline .form-item {
+    flex: 1 1 400px !important; /* Элементы могут растягиваться или сжиматься */
+    min-width: 0 !important;   /* Обеспечивает сжатие элементов при нехватке места */
+    max-width: 100%;           /* Предотвращает расширение элемента за пределы контейнера */
+}
 
 
 
@@ -210,7 +219,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 5px; flex-warp: warp !important; max-width: 90vw !important', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 5px; flex-warp: warp !important; overflow-x: auto !important;max-width:1500px !important;', // Flex-wrap для переноса на новую строку при нехватке места
         ),
 
     );
@@ -237,26 +246,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
     );
 
 
-    $form['field_container']['field_list_narushenija'] = array(
-        '#type' => 'textarea',
-        '#title' => t('Нарушения'),
-        '#required' => TRUE,
-        '#attributes' => array(
-            'class' => array('form-field-inline'),
-            'style' => 'margin-right: 10px; ',
-        ),
 
-    );
-
-    $form['field_container']['field_list_ukazanija'] = array(
-        '#type' => 'textarea',
-        '#title' => t('Указания'),
-        '#required' => TRUE,
-        '#attributes' => array(
-            'class' => array('form-field-inline'),
-            'style' => 'margin-right: 10px;',
-        ),
-    );
 
     $form['field_container']['field_list_zapis_proizvel'] = array(
         '#type' => 'select',
@@ -305,7 +295,33 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
             'style' => 'margin-right: 10px;',
         ),
     );
+    $form['container'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+            'class' => array('fields-inline', 'form-inline'),
+            'style' => 'display: flex;  align-items: center;  gap: 5px; flex-warp: warp !important; overflow-x: auto !important;max-width:1500px !important;', // Flex-wrap для переноса на новую строку при нехватке места
+        ),
+    );
+        $form['container']['field_list_narushenija'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Нарушения'),
+        '#required' => TRUE,
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px; ',
+        ),
 
+    );
+
+    $form['container']['field_list_ukazanija'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Указания'),
+        '#required' => TRUE,
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px;',
+        ),
+    );
     // Кнопка сабмита
     $form['submit'] = array(
         '#type' => 'submit',
