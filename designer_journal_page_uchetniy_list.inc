@@ -9,7 +9,7 @@
 function designer_journal_page_uchetniy_list($object_id) {
     // сразу проверяем, кто запрашивает страницу, проектировщик и админ - ОК.
     global $user;
-    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('Администратор', array_values($user->roles))) {
+    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('administrator', array_values($user->roles))) {
         drupal_set_message('Доступ к журналу авторского надзора разрешен только для проектировщиков.', 'error');
         // Возвращаемся на предыдущую страницу
         drupal_goto($_SERVER['HTTP_REFERER']);

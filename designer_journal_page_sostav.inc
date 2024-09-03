@@ -8,7 +8,7 @@ function designer_journal_page_sostav($object_id) {
 
     // сразу проверяем, кто запрашивает страницу, проектировщик и админ - ОК.
     global $user;
-    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('Администратор', array_values($user->roles))) {
+    if (!in_array('Проектировщик', array_values($user->roles)) && !in_array('administrator', array_values($user->roles))) {
         drupal_set_message('Доступ к журналу авторского надзора разрешен только для проектировщиков.', 'error');
         // Возвращаемся на предыдущую страницу
         drupal_goto($_SERVER['HTTP_REFERER']);
@@ -54,6 +54,7 @@ function designer_journal_page_sostav($object_id) {
                     isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
                     isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
+                    '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
                     '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 //
 
@@ -100,6 +101,84 @@ function designer_journal_page_sostav($object_id) {
             });
         });
     ", 'inline');
+
+
+
+
+
+    // ОБРАБОТЧИК ОТКРЫТИЯ ЖУРНАЛА (полностью тут)
+
+    $history_items = [];
+
+    foreach ($journal_node->field_history_sostav['und'] as $item) {
+        $field_collection_item = entity_load('field_collection_item', array($item['value']));
+        $history_item = reset($field_collection_item);
+
+        $history_items[] = [
+            'rowid' => $history_item->field_history_sostav_rowid['und'][0]['value'],
+            'fio' => $history_item->field_history_fio['und'][0]['value'],
+            'dolzhnost' => $history_item->field_history_dolzhnost['und'][0]['value'],
+            'jobname' => $history_item->field_history_jobname['und'][0]['value'],
+            'datenum' => $history_item->field_history_datenum['und'][0]['value'],
+        ];
+    }
+
+    $json_history_data = json_encode($history_items);
+
+    drupal_add_js("
+    jQuery(document).ready(function($) {
+        // Данные истории в JSON формате
+        var historyData = " . $json_history_data . ";
+
+        // Обработчик клика на кнопку
+        $('.open-history-button').click(function() {
+            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr><th>Row ID</th><th>FIO</th><th>Position</th><th>Job Name</th><th>Date</th></tr></thead><tbody>';
+
+            // Заполнение таблицы данными из JSON
+            $.each(historyData, function(index, item) {
+                tableContent += '<tr>' +
+                    '<td>' + item.rowid + '</td>' +
+                    '<td>' + item.fio + '</td>' +
+                    '<td>' + item.dolzhnost + '</td>' +
+                    '<td>' + item.jobname + '</td>' +
+                    '<td>' + item.datenum + '</td>' +
+                '</tr>';
+            });
+
+            tableContent += '</tbody></table>';
+
+            // Вставка содержимого в div
+            $('#soderzhimoe_colorboxa').html(tableContent);
+
+            // Открытие Colorbox
+            $.colorbox({
+                inline: true,
+                href: '#soderzhimoe_colorboxa',
+                width: '80%',
+                height: '80%',
+                onComplete: function() {
+                    $('#soderzhimoe_colorboxa').show(); // Явно показываем div после открытия модального окна
+                },
+                onClosed: function() {
+                    $('#soderzhimoe_colorboxa').hide(); // Скрываем div, когда Colorbox закрывается
+                }
+            });
+        });
+
+        // Создание и вставка div #soderzhimoe_colorboxa в body
+        if ($('#soderzhimoe_colorboxa').length === 0) {
+            $('body').append('<div id=\"soderzhimoe_colorboxa\" style=\"display: none;\"></div>');
+        }
+    });
+", 'inline');
+
+
+
+
+
+
+
+
 
 
 
@@ -419,6 +498,13 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     drupal_set_message(t($item_id));
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }
+
+
+
+
+
+
+
 
 
 
