@@ -61,7 +61,7 @@ function designer_journal_page_sostav($object_id) {
                 ),
                 'id' => 'row-' . $index,
             );
-            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id, $index);
+            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id, $index, $journal_id);
             // Скрытая строка с формой
             $rows[] = array(
                 'data' => array(
@@ -120,6 +120,8 @@ function designer_journal_page_sostav($object_id) {
             'dolzhnost' => $history_item->field_history_dolzhnost['und'][0]['value'],
             'jobname' => $history_item->field_history_jobname['und'][0]['value'],
             'datenum' => $history_item->field_history_datenum['und'][0]['value'],
+            'author' => $history_item->field_history_author['und'][0]['value'],
+            'change_date' => $history_item->field_history_change_date['und'][0]['value'],
         ];
     }
 
@@ -132,19 +134,39 @@ function designer_journal_page_sostav($object_id) {
 
         // Обработчик клика на кнопку
         $('.open-history-button').click(function() {
-            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr><th>Row ID</th><th>FIO</th><th>Position</th><th>Job Name</th><th>Date</th></tr></thead><tbody>';
+            var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
-            // Заполнение таблицы данными из JSON
-            $.each(historyData, function(index, item) {
-                tableContent += '<tr>' +
-                    '<td>' + item.rowid + '</td>' +
-                    '<td>' + item.fio + '</td>' +
-                    '<td>' + item.dolzhnost + '</td>' +
-                    '<td>' + item.jobname + '</td>' +
-                    '<td>' + item.datenum + '</td>' +
-                '</tr>';
+            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
+                '<th>Row ID</th>' +
+                '<th>FIO</th>' +
+                '<th>Position</th>' +
+                '<th>Job Name</th>' +
+                '<th>Date</th>' +
+                '<th>Author</th>' +
+                '<th>Change Date</th>' +
+
+            '</tr></thead><tbody>';
+
+            // Фильтрация данных по значению индекса
+            $.each(historyData, function(i, item) {
+                var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
+                var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
+
+                // Добавление строки в таблицу только если есть совпадение
+                if (match === 'Match') {
+                    tableContent += '<tr>' +
+                        '<td>' + item.rowid + '</td>' +
+                        '<td>' + item.fio + '</td>' +
+                        '<td>' + item.dolzhnost + '</td>' +
+                        '<td>' + item.jobname + '</td>' +
+                        '<td>' + item.datenum + '</td>' +
+                        '<td>' + item.author + '</td>' +
+                        '<td>' + item.change_date + '</td>' +
+                    '</tr>';
+                }
             });
 
+            // Завершение таблицы
             tableContent += '</tbody></table>';
 
             // Вставка содержимого в div
@@ -171,6 +193,11 @@ function designer_journal_page_sostav($object_id) {
         }
     });
 ", 'inline');
+
+
+
+    //
+
 
 
 
@@ -397,7 +424,7 @@ function designer_journal_sostav_rbochei_form_submit($form, &$form_state) {
 
 // ДИЧЬ ДЛЯ РЕДАКТИРОВАНИЯ ЗАПИСИ
 
-function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $item_id, $index) {
+function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $item_id, $index, $journal_id) {
 
     $form['container'] = array(
         '#type' => 'container',
@@ -454,6 +481,16 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
         '#default_value' => $item_id,
     );
 
+    $form['container']['index'] = array(
+
+        '#type' => 'hidden',
+        '#default_value' => $index,
+    );
+    $form['container']['journal_id'] = array(
+
+        '#type' => 'hidden',
+        '#default_value' => $journal_id,
+    );
 
     $form['submit'] = array(
         '#type' => 'submit',
@@ -468,36 +505,72 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
     return $form;
 }
 
+
 function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
-
-
-    // Получаем данные из формы
+    global $user;
+    // Загружаем объект field_collection_item по ID
     $item_id = $form_state['values']['item_id'];
+    $field_collection_item = entity_load('field_collection_item', array($item_id));
+
+    if (!$field_collection_item) {
+        drupal_set_message(t('Не удалось загрузить элемент коллекции полей с ID: @item_id', array('@item_id' => $item_id)), 'error');
+        return;
+    }
+
+    $item = reset($field_collection_item);
+
+    // Сохранение старых данных в переменные
+    $rowid = $form_state['values']['index'];
+    $old_field_fio = isset($item->field_fio['und'][0]['value']) ? $item->field_fio['und'][0]['value'] : '';
+    $old_field_jobname = isset($item->field_jobname['und'][0]['value']) ? $item->field_jobname['und'][0]['value'] : '';
+    $old_field_datenum = isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '';
+
+    // Получение новых данных из формы
     $field_datenum = $form_state['values']['field_datenum'];
     $field_dolzhnost = $form_state['values']['field_dolzhnost'];
     $field_jobname = $form_state['values']['field_jobname'];
-
     $field_fio = $form_state['values']['field_fio'];
-    // Загружаем объект field_collection_item по ID
-    $field_collection_item = entity_load('field_collection_item', array($item_id));
-    if ($field_collection_item) {
-        $item = reset($field_collection_item);
-        $item->field_fio['und'][0]['value'] = $field_fio;
-        $item->field_dolzhnost['und'][0]['value'] = $field_dolzhnost;
-        $item->field_jobname['und'][0]['value'] = $field_jobname;
-        $item->field_datenum['und'][0]['value'] = $field_datenum;
+    $journal_id = $form_state['values']['journal_id'];
 
-        // Сохраняем изменения
-        field_attach_update('field_collection_item', $item);
-        entity_save('field_collection_item', $item);
+    // Загрузка ноды журнала
+    $journal_node = node_load($journal_id);
+
+    if ($journal_node) {
+        // Создание нового элемента в коллекции field_history_sostav
+        $field_collection_item_history = entity_create('field_collection_item', array('field_name' => 'field_history_sostav'));
+
+        // Устанавливаем значения для полей
+        $field_collection_item_history->setHostEntity('node', $journal_node);
+        $field_collection_item_history->field_history_fio['und'][0]['value'] = $old_field_fio;
+        $field_collection_item_history->field_history_dolzhnost['und'][0]['value'] = $form_state['values']['field_dolzhnost'];
+        $field_collection_item_history->field_history_jobname['und'][0]['value'] = $old_field_jobname;
+        $field_collection_item_history->field_history_datenum['und'][0]['value'] = $old_field_datenum;
+        $field_collection_item_history->field_history_author['und'][0]['value'] = $user->name; // Логин текущего пользователя
+        $field_collection_item_history->field_history_change_date['und'][0]['value'] = date('Y-m-d H:i:s'); // Текущая дата и время
+        $field_collection_item_history->field_history_sostav_rowid['und'][0]['value'] = $rowid;
+
+        // Сохраняем элемент коллекции
+        $field_collection_item_history->save();
+
+        // Добавляем сообщение о успешном добавлении
+        drupal_set_message(t('Запись о предыдущем варианте успешно добавлена в журнал.'));
+    } else {
+        drupal_set_message(t('Не удалось загрузить ноду журнала с ID: @journal_id', array('@journal_id' => $journal_id)), 'error');
     }
 
-    // Добавляем сообщение о успешном сохранении
+    // Обновление элемента коллекции полей
+    $item->field_fio['und'][0]['value'] = $field_fio;
+    $item->field_dolzhnost['und'][0]['value'] = $field_dolzhnost;
+    $item->field_jobname['und'][0]['value'] = $field_jobname;
+    $item->field_datenum['und'][0]['value'] = $field_datenum;
+    $item->save();
+
     drupal_set_message(t('Изменения успешно сохранены.'));
-    drupal_set_message(t($form_state['values']['item_id']));
-    drupal_set_message(t($item_id));
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }
+
+
+
 
 
 
