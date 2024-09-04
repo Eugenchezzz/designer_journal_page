@@ -137,33 +137,39 @@ function designer_journal_page_sostav($object_id) {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
             var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>Row ID</th>' +
                 '<th>FIO</th>' +
                 '<th>Position</th>' +
                 '<th>Job Name</th>' +
                 '<th>Date</th>' +
                 '<th>Author</th>' +
                 '<th>Change Date</th>' +
-
             '</tr></thead><tbody>';
 
-            // Фильтрация данных по значению индекса
+            var rows = [];
+
+            // Фильтрация данных по значению индекса и добавление строк в массив
             $.each(historyData, function(i, item) {
                 var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
                 var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
 
-                // Добавление строки в таблицу только если есть совпадение
+                // Добавление строки в массив только если есть совпадение
                 if (match === 'Match') {
-                    tableContent += '<tr>' +
-                        '<td>' + item.rowid + '</td>' +
+                    rows.push(
+                        '<tr>' +
                         '<td>' + item.fio + '</td>' +
                         '<td>' + item.dolzhnost + '</td>' +
                         '<td>' + item.jobname + '</td>' +
                         '<td>' + item.datenum + '</td>' +
                         '<td>' + item.author + '</td>' +
                         '<td>' + item.change_date + '</td>' +
-                    '</tr>';
+                    '</tr>'
+                    );
                 }
+            });
+
+            // Добавление строк в таблицу в обратном порядке
+            rows.reverse().forEach(function(row) {
+                tableContent += row;
             });
 
             // Завершение таблицы
@@ -193,6 +199,7 @@ function designer_journal_page_sostav($object_id) {
         }
     });
 ", 'inline');
+
 
 
 
@@ -524,7 +531,7 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     $old_field_fio = isset($item->field_fio['und'][0]['value']) ? $item->field_fio['und'][0]['value'] : '';
     $old_field_jobname = isset($item->field_jobname['und'][0]['value']) ? $item->field_jobname['und'][0]['value'] : '';
     $old_field_datenum = isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '';
-
+    $old_field_dolzhnost = isset($item->field_dolzhnost['und'][0]['value']) ? $item->field_dolzhnost['und'][0]['value'] : '';
     // Получение новых данных из формы
     $field_datenum = $form_state['values']['field_datenum'];
     $field_dolzhnost = $form_state['values']['field_dolzhnost'];
@@ -542,7 +549,7 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
         // Устанавливаем значения для полей
         $field_collection_item_history->setHostEntity('node', $journal_node);
         $field_collection_item_history->field_history_fio['und'][0]['value'] = $old_field_fio;
-        $field_collection_item_history->field_history_dolzhnost['und'][0]['value'] = $form_state['values']['field_dolzhnost'];
+        $field_collection_item_history->field_history_dolzhnost['und'][0]['value'] = $old_field_dolzhnost;
         $field_collection_item_history->field_history_jobname['und'][0]['value'] = $old_field_jobname;
         $field_collection_item_history->field_history_datenum['und'][0]['value'] = $old_field_datenum;
         $field_collection_item_history->field_history_author['und'][0]['value'] = $user->name; // Логин текущего пользователя

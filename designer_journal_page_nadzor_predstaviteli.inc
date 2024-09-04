@@ -69,12 +69,13 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
            isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
            $formatted_start_date,
            $formatted_end_date,
-           '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+              '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
+              '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
        ),
           'id' => 'row-' . $index,
       );
 
-        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id, $index);
+        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id, $index, $journal_id);
         // Скрытая строка с формой
         $rows[] = array(
             'data' => array(
@@ -103,6 +104,111 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
 
   }
+
+  //ПОЛНАЯ ОБРАБОТКА ЖУРНАЛА ИСТОРИИ ИЗМЕНЕНИЙ
+    $history_items = [];
+
+    foreach ($journal_node->field_history_nadzor['und'] as $item) {
+        $field_collection_item = entity_load('field_collection_item', array($item['value']));
+        $history_item = reset($field_collection_item);
+
+        $history_items[] = [
+            'rowid' => isset($history_item->field_history_rowid['und'][0]['value']) ? $history_item->field_history_rowid['und'][0]['value'] : '',
+            'reg_fio' => isset($history_item->field_history_reg_fio['und'][0]['value']) ? $history_item->field_history_reg_fio['und'][0]['value'] : '',
+            'reg_place' => isset($history_item->field_history_reg_place['und'][0]['value']) ? $history_item->field_history_reg_place['und'][0]['value'] : '',
+            'reg_dolzhnost' => isset($history_item->field_history_reg_dolzhnost['und'][0]['value']) ? $history_item->field_history_reg_dolzhnost['und'][0]['value'] : '',
+            'reg_phone' => isset($history_item->field_history_reg_phone['und'][0]['value']) ? $history_item->field_history_reg_phone['und'][0]['value'] : '',
+            'reg_start_date' => isset($history_item->field_history_reg_start_date['und'][0]['value']) ? $history_item->field_history_reg_start_date['und'][0]['value'] : '',
+            'reg_end_date' => isset($history_item->field_history_reg_end_date['und'][0]['value']) ? $history_item->field_history_reg_end_date['und'][0]['value'] : '',
+            'reg_author' => isset($history_item->field_history_reg_author['und'][0]['value']) ? $history_item->field_history_reg_author['und'][0]['value'] : '',
+            'reg_change_date' => isset($history_item->field_history_reg_change_date['und'][0]['value']) ? $history_item->field_history_reg_change_date['und'][0]['value'] : '',
+        ];
+
+    }
+    $json_history_data = json_encode($history_items);
+
+    drupal_add_js("
+    jQuery(document).ready(function($) {
+        // Данные истории в JSON формате
+        var historyData = " . $json_history_data . ";
+
+        // Обработчик клика на кнопку
+        $('.open-history-button').click(function() {
+            var index = $(this).data('index').toString(); // Преобразование индекса в строку
+
+            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
+                '<th>FIO</th>' +
+                '<th>Place</th>' +
+                '<th>Position</th>' +
+                '<th>Phone</th>' +
+                '<th>Start Date</th>' +
+                '<th>End Date</th>' +
+                '<th>Author</th>' +
+                '<th>Change Date</th>' +
+            '</tr></thead><tbody>';
+
+            var rows = [];
+
+            // Фильтрация данных по значению индекса и добавление строк в массив
+            $.each(historyData, function(i, item) {
+                var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
+                var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
+
+                // Добавление строки в массив только если есть совпадение
+                if (match === 'Match') {
+                    rows.push(
+                        '<tr>' +
+                        '<td>' + item.reg_fio + '</td>' +
+                        '<td>' + item.reg_place + '</td>' +
+                        '<td>' + item.reg_dolzhnost + '</td>' +
+                        '<td>' + item.reg_phone + '</td>' +
+                        '<td>' + item.reg_start_date + '</td>' +
+                        '<td>' + item.reg_end_date + '</td>' +
+                        '<td>' + item.reg_author + '</td>' +
+                        '<td>' + item.reg_change_date + '</td>' +
+                    '</tr>'
+                    );
+                }
+            });
+
+            // Добавление строк в таблицу в обратном порядке
+            rows.reverse().forEach(function(row) {
+                tableContent += row;
+            });
+
+            // Завершение таблицы
+            tableContent += '</tbody></table>';
+
+            // Вставка содержимого в div
+            $('#soderzhimoe_colorboxa').html(tableContent);
+
+            // Открытие Colorbox
+            $.colorbox({
+                inline: true,
+                href: '#soderzhimoe_colorboxa',
+                width: '80%',
+                height: '80%',
+                onComplete: function() {
+                    $('#soderzhimoe_colorboxa').show(); // Явно показываем div после открытия модального окна
+                },
+                onClosed: function() {
+                    $('#soderzhimoe_colorboxa').hide(); // Скрываем div, когда Colorbox закрывается
+                }
+            });
+        });
+
+        // Создание и вставка div #soderzhimoe_colorboxa в body
+        if ($('#soderzhimoe_colorboxa').length === 0) {
+            $('body').append('<div id=\"soderzhimoe_colorboxa\" style=\"display: none;\"></div>');
+        }
+    });
+", 'inline');
+
+
+
+
+//ОБРАБОТКА ЖУРНАЛА ИЗМЕНЕНИЙ ЗАКОНЧЕНА
+
 
   // Render the table
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
@@ -381,7 +487,7 @@ function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state)
 
 
 
-function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id,$index){
+function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id, $index, $journal_id){
     $form['container'] = array(
         '#type' => 'container',
         '#attributes' => array(
@@ -473,6 +579,15 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#default_value' => $item_id,
     );
 
+    $form['container']['journal_id'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $journal_id,
+    );
+    $form['container']['index'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $index,
+    );
+
     $form['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
@@ -483,11 +598,57 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
 
 function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
 {
-    // Получаем значение item_id из скрытого поля
-    $item_id = $form_state['values']['item_id'];
+    // создадим запись в журнале изменений
+    global $user;
 
     // Загружаем элемент коллекции по item_id
+    $item_id = $form_state['values']['item_id'];
     $field_collection_item = entity_load('field_collection_item', array($item_id));
+    $item = reset($field_collection_item);
+
+
+    // достанем предыдущие данные, которые будем заменять, и запихнем их в новую запись в журнале истории изменений
+
+    $rowid = $form_state['values']['index'];
+    $old_field_reg_fio = isset($item->field_reg_fio['und'][0]['value']) ? $item->field_reg_fio['und'][0]['value'] : '';
+    $old_field_reg_place = isset($item->field_reg_place['und'][0]['value']) ? $item->field_reg_place['und'][0]['value'] : '';
+    $old_field_reg_dolzhnost = isset($item->field_reg_dolzhnost['und'][0]['value']) ? $item->field_reg_dolzhnost['und'][0]['value'] : '';
+    $old_field_reg_phone = isset($item->field_reg_phone['und'][0]['value']) ? $item->field_reg_phone['und'][0]['value'] : '';
+    $old_field_start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
+    $old_field_end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
+
+    //сохраняем новые данные
+    $journal_id = $form_state['values']['journal_id'];
+    $journal_node = node_load($journal_id);
+
+    if ($journal_node) {
+        // Создание нового элемента в коллекции field_history_nadzor
+        $field_collection_item_history = entity_create('field_collection_item', array('field_name' => 'field_history_nadzor'));
+
+        // Устанавливаем значения для полей
+        $field_collection_item_history->setHostEntity('node', $journal_node);
+        $field_collection_item_history->field_history_reg_fio['und'][0]['value'] = $old_field_reg_fio;
+        $field_collection_item_history->field_history_reg_dolzhnost['und'][0]['value'] = $old_field_reg_dolzhnost;
+        $field_collection_item_history->field_history_reg_place['und'][0]['value'] = $old_field_reg_place;
+        $field_collection_item_history->field_history_reg_phone['und'][0]['value'] = $old_field_reg_phone;
+        $field_collection_item_history->field_history_reg_start_date['und'][0]['value'] = $old_field_start_date;
+        $field_collection_item_history->field_history_reg_end_date['und'][0]['value'] = $old_field_end_date;
+        $field_collection_item_history->field_history_reg_author['und'][0]['value'] = $user->name; // Логин текущего пользователя
+        $field_collection_item_history->field_history_reg_change_date['und'][0]['value'] = date('Y-m-d H:i:s'); // Текущая дата и время
+        $field_collection_item_history->field_history_rowid['und'][0]['value'] = $rowid;
+
+        // Сохраняем элемент коллекции
+        $field_collection_item_history->save();
+        // Добавляем сообщение о успешном добавлении
+        drupal_set_message(t('Запись о предыдущем варианте успешно добавлена в журнал.'));
+    }else {
+        drupal_set_message(t('Не удалось загрузить ноду журнала с ID: @journal_id', array('@journal_id' => $journal_id)), 'error');
+    }
+
+
+
+
+
     if ($field_collection_item) {
         $item = reset($field_collection_item);
 
