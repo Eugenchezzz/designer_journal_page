@@ -73,13 +73,37 @@ function designer_journal_page_uchetniy_list($object_id) {
                 '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 
             );
-
+            $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $index);
+            // Скрытая строка с формой
+            $rows[] = array(
+                'data' => array(
+                    array(
+                        'data' => drupal_render($form),
+                        'colspan' => 6, // Объединяем все колонки
+                    ),
+                ),
+                'class' => array('edit-form-row'),
+                'id' => 'edit-row-' . $index,
+                'style' => 'display: none;', // Скрываем форму по умолчанию
+            );
         }
         $index++;
     }
 
+    drupal_add_js("
+        jQuery(document).ready(function($) {
+            $('.edit-button').click(function() {
+                var index = $(this).data('index');
+                $('#row-' + index).hide();
+                $('#edit-row-' + index).show();
+            });
+        });
+    ", 'inline');
+
+
 
     // Рендерим таблицу
+
     $table = theme('table', array('header' => $header, 'rows' => $rows));
     $output .= '<div class="table-left">' . $table . '</div>';
 
@@ -168,9 +192,15 @@ width: 100% !important;
 
 </style>';
     $output .= '<hr style="border: 7px solid black;  width: 100%;;">';
-    $output .= '<h1>Добавление записи</h1>';
-      $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
-      $output .= drupal_render($form);
+
+
+    // Вывод формы добавления
+//    $output .= '<h1>Добавление записи</h1>';
+//      $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
+//      $output .= drupal_render($form);
+//
+
+
     return $output;
 }
 
@@ -216,16 +246,16 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
 
 
 
-    $form['field_container'] = array(
-        '#type' => 'container',
-        '#attributes' => array(
-            'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;flex-direction: column;  align-items: center;  gap: 5px; flex-warp: warp !important; overflow-x: auto !important;max-width:1500px !important;', // Flex-wrap для переноса на новую строку при нехватке места
-        ),
+//    $form['field_container'] = array(
+//        '#type' => 'container',
+//        '#attributes' => array(
+//            'class' => array('fields-inline', 'form-inline'),
+//            'style' => 'display: flex;flex-direction: column;  align-items: center;  gap: 5px; flex-warp: warp !important; overflow-x: auto !important;max-width:1500px !important;', // Flex-wrap для переноса на новую строку при нехватке места
+//        ),
+//
+//    );
 
-    );
-
-    $form['field_container']['field_list_zapis_proizvel'] = array(
+    $form['field_list_zapis_proizvel'] = array(
         '#type' => 'select',
         '#title' => t('Запись произвел'),
         '#options' => $fio_variants,
@@ -236,7 +266,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         ),
     );
 
-    $form['field_container']['field_list_date'] = array(
+    $form['field_list_date'] = array(
         '#type' => 'date_popup',
         '#title' => t('Дата'),
         '#default_value' => !empty($field_collection_item->field_list_date['und'][0]['value'])
@@ -257,7 +287,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         ),
     );
 
-    $form['field_container']['field_list_narushenija'] = array(
+    $form['field_list_narushenija'] = array(
         '#type' => 'text_format',
         '#title' => t('Нарушения'),
         '#format'=> 'full_html',
@@ -265,28 +295,28 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
 
 
 
-    $form['field_container']['field_list_ukazanija'] = array(
+    $form['field_list_ukazanija'] = array(
         '#type' => 'text_format',
         '#title' => t('Указания'),
         '#format'=> 'full_html',
     );
 
-    $form['field_container']['field_list_oznak_org'] = array(
+    $form['field_list_oznak_org'] = array(
       '#type' => 'textfield',
       '#title' => t('Ознакомлены (Организация)'),
     );
 
-    $form['field_container']['field_list_oznak_zak'] = array(
+    $form['field_list_oznak_zak'] = array(
         '#type' => 'textfield',
         '#title' => t('Ознакомлены (Заказчик)'),
     );
 
-    $form['field_container']['field_list_otmetka_ukaz_proizv'] = array(
+    $form['field_list_otmetka_ukaz_proizv'] = array(
         '#type' => 'textfield',
         '#title' => t('Отметка о выполнении указаний (Производитель)'),
     );
 
-    $form['field_container']['field_list_otmetka_ukaz_predst'] = array(
+    $form['field_list_otmetka_ukaz_predst'] = array(
         '#type' => 'textfield',
         '#title' => t('Отметка о выполнении указаний (Представитель)'),
     );
@@ -403,121 +433,128 @@ function designer_journal_page_uchetniy_list_add_form_submit($form, &$form_state
 
 
 // ЗДЕСЬ КОД ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ
-function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $journal_id, $index) {
-// КОД ДЛЯ СОЗДАНИЯ МАССИВОВ ДОПУСТИМЫХ ДАННЫХ ДЛЯ ВЫБОРА
-// Загружаем ноду
+function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $journal_id, $row_index) {
+    // Загружаем ноду
     $journal_node = node_load($journal_id);
+    $item = $journal_node->field_uchetniy_list['und'][$row_index];
+    $field_collection_item = entity_load('field_collection_item', array($item['value']));
 
+
+    $item = reset($field_collection_item);
+
+
+    $row = $item;
+
+
+
+    // Получаем варианты ФИО
     $fio_variants = [];
     $index = 0;
-
     if ($journal_node && isset($journal_node->field_predstaviteli_nadzora['und'])) {
         foreach ($journal_node->field_predstaviteli_nadzora['und'] as $item) {
-            // Загружаем элемент коллекции полей
             $field_collection_item = entity_load('field_collection_item', array($item['value']));
-
             if ($field_collection_item) {
                 $item = reset($field_collection_item);
-
-                // Получаем значение ФИО
                 $fio_value = isset($item->field_reg_fio['und'][0]['value']) ? $item->field_reg_fio['und'][0]['value'] : 'Unknown';
-
-                // Проверяем, есть ли уже такое ФИО в массиве
                 if (!in_array($fio_value, $fio_variants)) {
-                    // Добавляем ФИО в массив, если оно не встречается
                     $fio_variants[$fio_value] = $fio_value;
                     $index++;
                 }
             }
         }
-
-
-
-    } else {
-        drupal_set_message(t('Node or field field_predstaviteli_nadzora not found.'));
     }
 
 
 
-    $form['field_container'] = array(
-        '#type' => 'container',
-        '#attributes' => array(
-            'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;flex-direction: column;  align-items: center;  gap: 5px; flex-warp: warp !important; overflow-x: auto !important;max-width:1500px !important;', // Flex-wrap для переноса на новую строку при нехватке места
-        ),
 
-    );
 
-    $form['field_container']['field_list_zapis_proizvel'] = array(
-        '#type' => 'select',
-        '#title' => t('Запись произвел'),
-        '#options' => $fio_variants,
-        '#required' => TRUE,
-        '#attributes' => array(
-            'class' => array('form-field-inline'),
-            'style' => 'margin-right: 10px;',
-        ),
-    );
 
-    $form['field_container']['field_list_date'] = array(
+
+
+    // Поле 'field_list_zapis_proizvel'
+//    $form['field_list_zapis_proizvel'] = array(
+//        '#type' => 'select',
+//        '#title' => t('Запись произвел'),
+//        '#options' => $fio_variants,
+//        '#required' => TRUE,
+//        '#default_value' => '$default_value',
+//        '#attributes' => array(
+//            'class' => array('form-field-inline'),
+//            'style' => 'margin-right: 10px;',
+//        ),
+//    );
+
+
+    // Поле 'field_list_date'
+    $form['field_list_date'] = array(
         '#type' => 'date_popup',
         '#title' => t('Дата'),
-        '#default_value' => !empty($field_collection_item->field_list_date['und'][0]['value'])
+        '#default_value' => $row && !empty($row->field_list_date['und'][0]['value'])
             ? array(
-                'year' => date('Y', strtotime($field_collection_item->field_list_date['und'][0]['value'])),
-                'month' => date('n', strtotime($field_collection_item->field_list_date['und'][0]['value'])),
-                'day' => date('j', strtotime($field_collection_item->field_list_date['und'][0]['value']))
+                'year' => date('Y', strtotime($row->field_list_date['und'][0]['value'])),
+                'month' => date('n', strtotime($row->field_list_date['und'][0]['value'])),
+                'day' => date('j', strtotime($row->field_list_date['und'][0]['value']))
             )
             : array('year' => '', 'month' => '', 'day' => ''),
         '#date_date_element' => 'date',
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Обратите внимание на формат даты
+        '#date_format' => 'Y-m-d',
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
         ),
     );
 
-    $form['field_container']['field_list_narushenija'] = array(
+    dsm($row->field_list_narushenija['und'][0]['value']);
+    // Поле 'field_list_narushenija' с подгрузкой формата и значения
+    $form['field_list_narushenija'] = array(
         '#type' => 'text_format',
         '#title' => t('Нарушения'),
-        '#format'=> 'full_html',
+      '#default_value' => isset($row->field_list_narushenija['und'][0]['value']) ? $row->field_list_narushenija['und'][0]['value'] : '',
+
     );
 
-
-
-    $form['field_container']['field_list_ukazanija'] = array(
+    // Поле 'field_list_ukazanija' с подгрузкой формата и значения
+    $form['field_list_ukazanija'] = array(
         '#type' => 'text_format',
         '#title' => t('Указания'),
-        '#format'=> 'full_html',
+       '#default_value' => isset($row->field_list_ukazanija['und'][0]['value']) ? $row->field_list_ukazanija['und'][0]['value'] : '',
+
     );
 
-    $form['field_container']['field_list_oznak_org'] = array(
+    // Поле 'field_list_oznak_org'
+    $form['field_list_oznak_org'] = array(
         '#type' => 'textfield',
         '#title' => t('Ознакомлены (Организация)'),
+        '#default_value' => isset($row->field_list_oznak_org['und'][0]['value']) ? $row->field_list_oznak_org['und'][0]['value'] : '',
     );
 
-    $form['field_container']['field_list_oznak_zak'] = array(
+    // Поле 'field_list_oznak_zak'
+    $form['field_list_oznak_zak'] = array(
         '#type' => 'textfield',
         '#title' => t('Ознакомлены (Заказчик)'),
+     '#default_value' => isset($row->field_list_oznak_zak['und'][0]['value'])? $row->field_list_oznak_zak['und'][0]['value'] : '',
     );
 
-    $form['field_container']['field_list_otmetka_ukaz_proizv'] = array(
+    // Поле 'field_list_otmetka_ukaz_proizv'
+    $form['field_list_otmetka_ukaz_proizv'] = array(
         '#type' => 'textfield',
         '#title' => t('Отметка о выполнении указаний (Производитель)'),
+        '#default_value' => isset($row->field_list_otmetka_ukaz_proizv['und'][0]['value']) ? $row->field_list_otmetka_ukaz_proizv['und'][0]['value'] : '',
     );
 
-    $form['field_container']['field_list_otmetka_ukaz_predst'] = array(
+
+
+
+    // Поле 'field_list_otmetka_ukaz_predst'
+    $form['field_list_otmetka_ukaz_predst'] = array(
         '#type' => 'textfield',
         '#title' => t('Отметка о выполнении указаний (Представитель)'),
+        '#default_value' => isset($row->field_list_otmetka_ukaz_predst['und'][0]['value']) ? $row->field_list_otmetka_ukaz_predst['und'][0]['value'] : '',
+
     );
-
-    // Сохраняем объект журнала в form_state для использования в обработчике
-    $form_state['journal_node'] = node_load($journal_id);
-
-
 
     // Кнопка сабмита
     $form['submit'] = array(
