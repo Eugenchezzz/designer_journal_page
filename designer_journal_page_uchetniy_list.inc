@@ -50,7 +50,7 @@ function designer_journal_page_uchetniy_list($object_id) {
     $rows = array();
 
     // Проходимся по элементам коллекции полей
-    $index = 0;
+    $row_index = 0;
     foreach ($journal_node->field_uchetniy_list['und'] as $item) {
         $field_collection_item = entity_load('field_collection_item', array($item['value']));
         if ($field_collection_item) {
@@ -70,10 +70,10 @@ function designer_journal_page_uchetniy_list($object_id) {
                 isset($item->field_list_otmetka_ukaz_predst['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_predst['und'][0]['value']) : '',
                 isset($item->field_list_narushenija['und'][0]['value']) ? check_markup($item->field_list_narushenija['und'][0]['value'], $item->field_list_narushenija['und'][0]['format']) : '',
                 isset($item->field_list_ukazanija['und'][0]['value']) ? check_markup($item->field_list_ukazanija['und'][0]['value'], $item->field_list_ukazanija['und'][0]['format']) : '',
-                '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+                '<button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 
             );
-            $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $index);
+            $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $row_index);
             // Скрытая строка с формой
             $rows[] = array(
                 'data' => array(
@@ -83,11 +83,11 @@ function designer_journal_page_uchetniy_list($object_id) {
                     ),
                 ),
                 'class' => array('edit-form-row'),
-                'id' => 'edit-row-' . $index,
+                'id' => 'edit-row-' . $row_index,
                 'style' => 'display: none;', // Скрываем форму по умолчанию
             );
         }
-        $index++;
+        $row_index++;
     }
 
     drupal_add_js("
@@ -507,7 +507,7 @@ function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $jou
         ),
     );
 
-    dsm($row->field_list_narushenija['und'][0]['value']);
+
     // Поле 'field_list_narushenija' с подгрузкой формата и значения
     $form['field_list_narushenija'] = array(
         '#type' => 'text_format',
@@ -556,6 +556,17 @@ function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $jou
 
     );
 
+    $form['row_index'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $row_index,
+
+    );
+
+    $form['journal_id'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $journal_id,
+
+    );
     // Кнопка сабмита
     $form['submit'] = array(
         '#type' => 'submit',
@@ -568,3 +579,40 @@ function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $jou
 
     return $form;
 }
+
+function designer_journal_page_uchetniy_list_edit_form_submit($form, &$form_state) {
+    // Получаем ID журнала и индекс строки
+    $journal_id = $form_state['values']['journal_id'];
+    $row_index = $form_state['values']['row_index'];
+
+    // Загружаем ноду журнала
+    $journal_node = node_load($journal_id);
+
+    // Загружаем элемент коллекции полей
+    $item = $journal_node->field_uchetniy_list['und'][$row_index];
+    $field_collection_item = entity_load('field_collection_item', array($item['value']));
+    $item = reset($field_collection_item);
+
+    // Устанавливаем значения для полей
+   // $item->field_list_zapis_proizvel['und'][0]['value'] = $form_state['values']['field_list_zapis_proizvel'];
+    $item->field_list_date['und'][0]['value'] = $form_state['values']['field_list_date'];
+
+    // Для полей типа text_format
+    $item->field_list_narushenija['und'][0]['value'] = $form_state['values']['field_list_narushenija']['value'];
+    $item->field_list_narushenija['und'][0]['format'] = $form_state['values']['field_list_narushenija']['format'];
+    $item->field_list_ukazanija['und'][0]['value'] = $form_state['values']['field_list_ukazanija']['value'];
+    $item->field_list_ukazanija['und'][0]['format'] = $form_state['values']['field_list_ukazanija']['format'];
+
+    $item->field_list_oznak_org['und'][0]['value'] = $form_state['values']['field_list_oznak_org'];
+    $item->field_list_oznak_zak['und'][0]['value'] = $form_state['values']['field_list_oznak_zak'];
+    $item->field_list_otmetka_ukaz_proizv['und'][0]['value'] = $form_state['values']['field_list_otmetka_ukaz_proizv'];
+    $item->field_list_otmetka_ukaz_predst['und'][0]['value'] = $form_state['values']['field_list_otmetka_ukaz_predst'];
+
+    // Сохраняем элемент коллекции
+    $item->save();
+
+    // Перезагружаем страницу после сохранения
+    $form_state['redirect'] = $_SERVER['REQUEST_URI'];
+}
+
+
