@@ -79,7 +79,7 @@ function designer_journal_page_uchetniy_list($object_id) {
                 'data' => array(
                     array(
                         'data' => drupal_render($form),
-                        'colspan' => 6, // Объединяем все колонки
+                        'colspan' => 9, // Объединяем все колонки
                     ),
                 ),
                 'class' => array('edit-form-row'),
@@ -195,10 +195,10 @@ width: 100% !important;
 
 
     // Вывод формы добавления
-//    $output .= '<h1>Добавление записи</h1>';
-//      $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
-//      $output .= drupal_render($form);
-//
+    $output .= '<h1>Добавление записи</h1>';
+      $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
+      $output .= drupal_render($form);
+
 
 
     return $output;
@@ -570,7 +570,7 @@ function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $jou
     // Кнопка сабмита
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => t('Добавить запись'),
+        '#value' => t('Сохранить'),
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
@@ -610,6 +610,10 @@ function designer_journal_page_uchetniy_list_edit_form_submit($form, &$form_stat
 
     // Сохраняем элемент коллекции
     $item->save();
+
+
+
+    //ДОБАВЛЯЕМ ДАННЫЕ В ЖУРНАЛ ИЗМЕНЕНИЙ
 
     // Перезагружаем страницу после сохранения
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
