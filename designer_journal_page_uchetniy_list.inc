@@ -70,6 +70,7 @@ function designer_journal_page_uchetniy_list($object_id) {
                 isset($item->field_list_otmetka_ukaz_predst['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_predst['und'][0]['value']) : '',
                 isset($item->field_list_narushenija['und'][0]['value']) ? check_markup($item->field_list_narushenija['und'][0]['value'], $item->field_list_narushenija['und'][0]['format']) : '',
                 isset($item->field_list_ukazanija['und'][0]['value']) ? check_markup($item->field_list_ukazanija['und'][0]['value'], $item->field_list_ukazanija['und'][0]['format']) : '',
+                '<button class="open-history-button btn btn-default form-submit" data-index="' . $row_index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
                 '<button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 
             );
@@ -199,6 +200,107 @@ width: 100% !important;
       $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
       $output .= drupal_render($form);
 
+// ОБРАБОТКА КНОПКИ ЖУРНАЛА
+    $history_items = [];
+
+    foreach ($journal_node->field_history_uchetniy_list['und'] as $item) {
+        $field_collection_item = entity_load('field_collection_item', array($item['value']));
+        $history_item = reset($field_collection_item);
+
+        $history_items[] = [
+            'rowid' => $history_item->field_history_list_rowid['und'][0]['value'],
+            'zapis_proizvel' => $history_item->field_history_list_zapis_proizve['und'][0]['value'],
+            'date' => $history_item->field_history_list_date['und'][0]['value'],
+            'narushenija' => $history_item->field_history_list_narushenija['und'][0]['value'],
+            'ukazanija' => $history_item->field_history_list_ukazanija['und'][0]['value'],
+            'oznak_org' => $history_item->field_history_list_oznak_org['und'][0]['value'],
+            'oznak_zak' => $history_item->field_history_list_oznak_zak['und'][0]['value'],
+            'otmetka_ukaz_proizv' => $history_item->field_history_list_ukaz_proizv['und'][0]['value'],
+            'otmetka_ukaz_predst' => $history_item->field_history_list_ukaz_predst['und'][0]['value'],
+
+        ];
+    }
+
+    $json_history_data = json_encode($history_items);
+    dsm($history_items);
+
+    drupal_add_js("
+    
+    jQuery(document).ready(function($) {
+        // Данные истории в JSON формате
+        var historyData = " . $json_history_data . ";
+
+        // Обработчик клика на кнопку
+        $('.open-history-button').click(function() {
+            var index = $(this).data('index').toString(); // Преобразование индекса в строку
+
+            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
+                '<th>Запись произвел</th>' +
+                '<th>Дата</th>' +
+                '<th>Нарушения</th>' +
+                '<th>Указания</th>' +
+                '<th>Ознакомлен орг.</th>' +
+                '<th>Ознакомлен заказчик</th>' +
+                '<th>Отметка указания произв.</th>' +
+                '<th>Отметка указания предст.</th>' +
+            '</tr></thead><tbody>';
+
+            var rows = [];
+
+            // Фильтрация данных по значению индекса и добавление строк в массив
+            $.each(historyData, function(i, item) {
+                var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
+                var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
+
+                // Добавление строки в массив только если есть совпадение
+                if (match === 'Match') {
+                    rows.push(
+                        '<tr>' +
+                        '<td>' + item.zapis_proizvel + '</td>' +
+                        '<td>' + item.date + '</td>' +
+                        '<td>' + item.narushenija + '</td>' +
+                        '<td>' + item.ukazanija + '</td>' +
+                        '<td>' + item.oznak_org + '</td>' +
+                        '<td>' + item.oznak_zak + '</td>' +
+                        '<td>' + item.otmetka_ukaz_proizv + '</td>' +
+                        '<td>' + item.otmetka_ukaz_predst + '</td>' +
+                    '</tr>'
+                    );
+                }
+            });
+
+            // Добавление строк в таблицу в обратном порядке
+            rows.reverse().forEach(function(row) {
+                tableContent += row;
+            });
+
+            // Завершение таблицы
+            tableContent += '</tbody></table>';
+
+            // Вставка содержимого в div
+            $('#soderzhimoe_colorboxa').html(tableContent);
+
+            // Открытие Colorbox
+            $.colorbox({
+                inline: true,
+                href: '#soderzhimoe_colorboxa',
+                width: '80%',
+                height: '80%',
+                onComplete: function() {
+                    $('#soderzhimoe_colorboxa').show(); // Явно показываем div после открытия модального окна
+                },
+                onClosed: function() {
+                    $('#soderzhimoe_colorboxa').hide(); // Скрываем div, когда Colorbox закрывается
+                }
+            });
+        });
+
+        // Создание и вставка div #soderzhimoe_colorboxa в body
+        if ($('#soderzhimoe_colorboxa').length === 0) {
+            $('body').append('<div id=\"soderzhimoe_colorboxa\" style=\"display: none;\"></div>');
+        }
+    });
+", 'inline');
 
 
     return $output;
