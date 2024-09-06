@@ -54,8 +54,8 @@ function designer_journal_page_sostav($object_id) {
                     isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
                     isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
-                    '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
-                    '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+                    '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
+                    <button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 //
 
                 ),
@@ -203,6 +203,14 @@ function designer_journal_page_sostav($object_id) {
 
 
 
+
+
+
+
+
+
+
+
     //
 
 
@@ -224,7 +232,22 @@ function designer_journal_page_sostav($object_id) {
 
 
     // Выводим содержимое страницы
+
+
+    //ЗДЕСЬ ВСЕ ОСНОВНЫЕ СТИЛИ
     $output .= '<style>
+
+
+/* ПЕРЕСТАНОВКА КНОПОЧКИ В КОЛОРБОКСЕ */
+#cboxClose{
+    position: absolute !important;
+    top: 1px !important;
+}
+
+
+
+
+
 
 .edit-form-row td {
     padding: 0;
@@ -571,6 +594,9 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     $item->field_jobname['und'][0]['value'] = $field_jobname;
     $item->field_datenum['und'][0]['value'] = $field_datenum;
     $item->save();
+
+
+
 
     drupal_set_message(t('Изменения успешно сохранены.'));
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];

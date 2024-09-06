@@ -70,9 +70,9 @@ function designer_journal_page_uchetniy_list($object_id) {
                 isset($item->field_list_otmetka_ukaz_predst['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_predst['und'][0]['value']) : '',
                 isset($item->field_list_narushenija['und'][0]['value']) ? check_markup($item->field_list_narushenija['und'][0]['value'], $item->field_list_narushenija['und'][0]['format']) : '',
                 isset($item->field_list_ukazanija['und'][0]['value']) ? check_markup($item->field_list_ukazanija['und'][0]['value'], $item->field_list_ukazanija['und'][0]['format']) : '',
-                '<button class="open-history-button btn btn-default form-submit" data-index="' . $row_index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
-                '<button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
-
+                // Объединяем обе кнопки в одну ячейку
+                '<button class="open-history-button btn btn-default form-submit" data-index="' . $row_index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button> 
+            <button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
             );
             $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $row_index);
             // Скрытая строка с формой
@@ -108,8 +108,14 @@ function designer_journal_page_uchetniy_list($object_id) {
     $table = theme('table', array('header' => $header, 'rows' => $rows));
     $output .= '<div class="table-left">' . $table . '</div>';
 
-    // Добавляем форму добавления новой записи
+
     $output .= '<style>
+
+/* ПЕРЕСТАНОВКА КНОПОЧКИ В КОЛОРБОКСЕ */
+#cboxClose{
+    position: absolute !important;
+    top: 1px !important;
+}
 
 /* для отображения картинок */
 td > p > a > img {
@@ -161,13 +167,7 @@ width: 100% !important;
 }
 
 /* Обрезка и перенос текста */
-.table td {
-    width: 300px !important; /* Максимальная ширина ячейки, можете настроить */
-    overflow: hidden !important;
-    text-overflow: ellipsis !important; /* Добавляет троеточие для длинного текста */
-   /* white-space: nowrap !important; /* Не переносит текст на новую строку */
-    word-break: break-word !important; /* Переносит длинные слова */
-}
+
 
 /* Показ полного текста при наведении */
 /*.table td:hover {
@@ -185,6 +185,15 @@ width: 100% !important;
 }
 
 
+.ckeditor_links, .panel-body {
+    display: none !important;
+}
+
+
+
+
+
+
 
 
 
@@ -192,11 +201,12 @@ width: 100% !important;
 
 
 </style>';
+
+
+    // Добавляем форму добавления новой записи
     $output .= '<hr style="border: 7px solid black;  width: 100%;;">';
-
-
-    // Вывод формы добавления
     $output .= '<h1>Добавление записи</h1>';
+    // Вывод формы добавления
       $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
       $output .= drupal_render($form);
 
@@ -209,7 +219,7 @@ width: 100% !important;
 
         $history_items[] = [
             'rowid' => $history_item->field_history_list_rowid['und'][0]['value'],
-            'zapis_proizvel' => $history_item->field_history_list_zapis_proizve['und'][0]['value'],
+            //'zapis_proizvel' => $history_item->field_history_list_zapis_proizve['und'][0]['value'],
             'date' => $history_item->field_history_list_date['und'][0]['value'],
             'narushenija' => $history_item->field_history_list_narushenija['und'][0]['value'],
             'ukazanija' => $history_item->field_history_list_ukazanija['und'][0]['value'],
@@ -222,8 +232,9 @@ width: 100% !important;
     }
 
     $json_history_data = json_encode($history_items);
-    dsm($history_items);
 
+
+    // Обработка кнопки изменений
     drupal_add_js("
     
     jQuery(document).ready(function($) {
@@ -235,7 +246,6 @@ width: 100% !important;
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
             var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>Запись произвел</th>' +
                 '<th>Дата</th>' +
                 '<th>Нарушения</th>' +
                 '<th>Указания</th>' +
@@ -256,7 +266,6 @@ width: 100% !important;
                 if (match === 'Match') {
                     rows.push(
                         '<tr>' +
-                        '<td>' + item.zapis_proizvel + '</td>' +
                         '<td>' + item.date + '</td>' +
                         '<td>' + item.narushenija + '</td>' +
                         '<td>' + item.ukazanija + '</td>' +
@@ -695,16 +704,28 @@ function designer_journal_page_uchetniy_list_edit_form_submit($form, &$form_stat
     $field_collection_item = entity_load('field_collection_item', array($item['value']));
     $item = reset($field_collection_item);
 
+    // Обработка текста с изображениями для поля "нарушения"
+    $narushenija_text = $form_state['values']['field_list_narushenija']['value'];
+    $narushenija_format = $form_state['values']['field_list_narushenija']['format'];
+
+    // Ищем все теги <img> и оборачиваем их в ссылки на полные изображения (Colorbox) для поля "нарушения"
+    $pattern = '/<img(.*?)src="(.*?)"(.*?)>/i';
+    $replacement = '<a href="$2" class="colorbox" rel="gallery"><img$1src="$2"$3></a>';
+    $text_with_colorbox_narushenija = preg_replace($pattern, $replacement, $narushenija_text);
+
+    // Обработка текста с изображениями для поля "указания"
+    $ukazanija_text = $form_state['values']['field_list_ukazanija']['value'];
+    $ukazanija_format = $form_state['values']['field_list_ukazanija']['format'];
+
+    // Ищем все теги <img> и оборачиваем их в ссылки на полные изображения (Colorbox) для поля "указания"
+    $text_with_colorbox_ukazanija = preg_replace($pattern, $replacement, $ukazanija_text);
+
     // Устанавливаем значения для полей
-   // $item->field_list_zapis_proizvel['und'][0]['value'] = $form_state['values']['field_list_zapis_proizvel'];
     $item->field_list_date['und'][0]['value'] = $form_state['values']['field_list_date'];
-
-    // Для полей типа text_format
-    $item->field_list_narushenija['und'][0]['value'] = $form_state['values']['field_list_narushenija']['value'];
-    $item->field_list_narushenija['und'][0]['format'] = $form_state['values']['field_list_narushenija']['format'];
-    $item->field_list_ukazanija['und'][0]['value'] = $form_state['values']['field_list_ukazanija']['value'];
-    $item->field_list_ukazanija['und'][0]['format'] = $form_state['values']['field_list_ukazanija']['format'];
-
+    $item->field_list_narushenija['und'][0]['value'] = $text_with_colorbox_narushenija;
+    $item->field_list_narushenija['und'][0]['format'] = $narushenija_format;
+    $item->field_list_ukazanija['und'][0]['value'] = $text_with_colorbox_ukazanija;
+    $item->field_list_ukazanija['und'][0]['format'] = $ukazanija_format;
     $item->field_list_oznak_org['und'][0]['value'] = $form_state['values']['field_list_oznak_org'];
     $item->field_list_oznak_zak['und'][0]['value'] = $form_state['values']['field_list_oznak_zak'];
     $item->field_list_otmetka_ukaz_proizv['und'][0]['value'] = $form_state['values']['field_list_otmetka_ukaz_proizv'];
@@ -713,12 +734,26 @@ function designer_journal_page_uchetniy_list_edit_form_submit($form, &$form_stat
     // Сохраняем элемент коллекции
     $item->save();
 
+    // Добавляем данные в журнал изменений
+    $field_collection_item_history = entity_create('field_collection_item', array('field_name' => 'field_history_uchetniy_list'));
+    $field_collection_item_history->setHostEntity('node', $journal_node);
 
+    // Заполняем поля историческими данными
+    $field_collection_item_history->field_history_list_rowid['und'][0]['value'] = $row_index;
+    $field_collection_item_history->field_history_list_date['und'][0]['value'] = $form_state['values']['field_list_date'];
+    $field_collection_item_history->field_history_list_narushenija['und'][0]['value'] = $text_with_colorbox_narushenija;
+    $field_collection_item_history->field_history_list_ukazanija['und'][0]['value'] = $text_with_colorbox_ukazanija;
+    $field_collection_item_history->field_history_list_oznak_org['und'][0]['value'] = $form_state['values']['field_list_oznak_org'];
+    $field_collection_item_history->field_history_list_oznak_zak['und'][0]['value'] = $form_state['values']['field_list_oznak_zak'];
+    $field_collection_item_history->field_history_list_ukaz_proizv['und'][0]['value'] = $form_state['values']['field_list_otmetka_ukaz_proizv'];
+    $field_collection_item_history->field_history_list_ukaz_predst['und'][0]['value'] = $form_state['values']['field_list_otmetka_ukaz_predst'];
 
-    //ДОБАВЛЯЕМ ДАННЫЕ В ЖУРНАЛ ИЗМЕНЕНИЙ
+    // Сохраняем элемент коллекции
+    $field_collection_item_history->save();
 
     // Перезагружаем страницу после сохранения
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }
+
 
 

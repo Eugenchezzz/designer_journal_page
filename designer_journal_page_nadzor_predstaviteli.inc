@@ -69,8 +69,8 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
            isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
            $formatted_start_date,
            $formatted_end_date,
-              '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>',
-              '<button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+              '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
+              <button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
        ),
           'id' => 'row-' . $index,
       );
@@ -214,6 +214,13 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
 
     $output .= '<style>
+
+/* ПЕРЕСТАНОВКА КНОПОЧКИ В КОЛОРБОКСЕ */
+#cboxClose{
+    position: absolute !important;
+    top: 1px !important;
+}
+
 
 .edit-form-row td {
     padding: 0;
