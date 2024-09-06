@@ -137,14 +137,14 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
             var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>FIO</th>' +
-                '<th>Place</th>' +
-                '<th>Position</th>' +
-                '<th>Phone</th>' +
-                '<th>Start Date</th>' +
-                '<th>End Date</th>' +
-                '<th>Author</th>' +
-                '<th>Change Date</th>' +
+                '<th>Фио</th>' +
+                '<th>Место работы</th>' +
+                '<th>Занимаемая должность</th>' +
+                '<th>Номер телефона</th>' +
+                '<th>Дата приезда</th>' +
+                '<th>Дата отъезда </th>' +
+                '<th>Автор</th>' +
+                '<th>Дата изменения</th>' +
             '</tr></thead><tbody>';
 
             var rows = [];
@@ -234,7 +234,10 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 }
 
 
-
+/* Применить Flexbox для последнего элемента в каждой строке таблицы */
+table tr td:last-child {
+      white-space: nowrap;
+}
 
 
 
@@ -247,28 +250,28 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
     .form-item-field-reg-fio {
     
-        flex: 0 0 260px !important; /* Ширина для field_fio */
+        flex: 0 0 15% !important; /* Ширина для field_fio */
     }
 
     .form-item-field-reg-place{
-        flex: 0 0 260px !important; /* Ширина для field_dolzhnost */
+        flex: 0 0 16% !important; /* Ширина для field_dolzhnost */
     }
 
     .form-item-field-reg-dolzhnost {
-        flex: 0 0 260px !important; /* Ширина для field_jobname */
+        flex: 0 0 16% !important; /* Ширина для field_jobname */
         
     }
 
     .form-item-field-reg-phone {
-        flex: 0 0 250px !important; /* Ширина для field_datenum */
+        flex: 0 0 15% !important; /* Ширина для field_datenum */
     }
-    .form-item-field-reg-start-date {
-        flex: 0 0 2px !important; /* Ширина для field_datenum */
-        width: 260px !important;
+    .form-item-field-reg-start-date-date {
+        flex: 0 0 15% !important; /* Ширина для field_datenum */
+ 
     }
         .form-item-field-reg-end-date {
-        flex: 0 0 2px !important; /* Ширина для field_datenum */
-        width: 260px !important;
+        flex: 0 0 15% !important; /* Ширина для field_datenum */
+
     }
 
     .form-item input {
@@ -603,9 +606,7 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
     return $form;
 }
 
-function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
-{
-    // создадим запись в журнале изменений
+function designer_journal_page_nadzor_edit_form_submit($form, &$form_state) {
     global $user;
 
     // Загружаем элемент коллекции по item_id
@@ -613,19 +614,17 @@ function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
     $field_collection_item = entity_load('field_collection_item', array($item_id));
     $item = reset($field_collection_item);
 
-
-    // достанем предыдущие данные, которые будем заменять, и запихнем их в новую запись в журнале истории изменений
-
+    // Получаем новые данные из формы
+    $field_reg_fio = $form_state['values']['field_reg_fio'];
+    $field_reg_place = $form_state['values']['field_reg_place'];
+    $field_reg_dolzhnost = $form_state['values']['field_reg_dolzhnost'];
+    $field_reg_phone = $form_state['values']['field_reg_phone'];
+    $field_reg_start_date = $form_state['values']['field_reg_start_date'];
+    $field_reg_end_date = $form_state['values']['field_reg_end_date'];
     $rowid = $form_state['values']['index'];
-    $old_field_reg_fio = isset($item->field_reg_fio['und'][0]['value']) ? $item->field_reg_fio['und'][0]['value'] : '';
-    $old_field_reg_place = isset($item->field_reg_place['und'][0]['value']) ? $item->field_reg_place['und'][0]['value'] : '';
-    $old_field_reg_dolzhnost = isset($item->field_reg_dolzhnost['und'][0]['value']) ? $item->field_reg_dolzhnost['und'][0]['value'] : '';
-    $old_field_reg_phone = isset($item->field_reg_phone['und'][0]['value']) ? $item->field_reg_phone['und'][0]['value'] : '';
-    $old_field_start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
-    $old_field_end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
-
-    //сохраняем новые данные
     $journal_id = $form_state['values']['journal_id'];
+
+    // Загрузка ноды журнала
     $journal_node = node_load($journal_id);
 
     if ($journal_node) {
@@ -634,38 +633,31 @@ function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
 
         // Устанавливаем значения для полей
         $field_collection_item_history->setHostEntity('node', $journal_node);
-        $field_collection_item_history->field_history_reg_fio['und'][0]['value'] = $old_field_reg_fio;
-        $field_collection_item_history->field_history_reg_dolzhnost['und'][0]['value'] = $old_field_reg_dolzhnost;
-        $field_collection_item_history->field_history_reg_place['und'][0]['value'] = $old_field_reg_place;
-        $field_collection_item_history->field_history_reg_phone['und'][0]['value'] = $old_field_reg_phone;
-        $field_collection_item_history->field_history_reg_start_date['und'][0]['value'] = $old_field_start_date;
-        $field_collection_item_history->field_history_reg_end_date['und'][0]['value'] = $old_field_end_date;
+        $field_collection_item_history->field_history_reg_fio['und'][0]['value'] = $field_reg_fio;
+        $field_collection_item_history->field_history_reg_dolzhnost['und'][0]['value'] = $field_reg_dolzhnost;
+        $field_collection_item_history->field_history_reg_place['und'][0]['value'] = $field_reg_place;
+        $field_collection_item_history->field_history_reg_phone['und'][0]['value'] = $field_reg_phone;
+        $field_collection_item_history->field_history_reg_start_date['und'][0]['value'] = $field_reg_start_date;
+        $field_collection_item_history->field_history_reg_end_date['und'][0]['value'] = $field_reg_end_date;
         $field_collection_item_history->field_history_reg_author['und'][0]['value'] = $user->name; // Логин текущего пользователя
         $field_collection_item_history->field_history_reg_change_date['und'][0]['value'] = date('Y-m-d H:i:s'); // Текущая дата и время
         $field_collection_item_history->field_history_rowid['und'][0]['value'] = $rowid;
 
         // Сохраняем элемент коллекции
         $field_collection_item_history->save();
-        // Добавляем сообщение о успешном добавлении
         drupal_set_message(t('Запись о предыдущем варианте успешно добавлена в журнал.'));
-    }else {
+    } else {
         drupal_set_message(t('Не удалось загрузить ноду журнала с ID: @journal_id', array('@journal_id' => $journal_id)), 'error');
     }
 
-
-
-
-
-    if ($field_collection_item) {
-        $item = reset($field_collection_item);
-
+    if ($item) {
         // Обновляем значения полей в элементе коллекции
-        $item->field_reg_fio['und'][0]['value'] = $form_state['values']['field_reg_fio'];
-        $item->field_reg_place['und'][0]['value'] = $form_state['values']['field_reg_place'];
-        $item->field_reg_dolzhnost['und'][0]['value'] = $form_state['values']['field_reg_dolzhnost'];
-        $item->field_reg_phone['und'][0]['value'] = $form_state['values']['field_reg_phone'];
-        $item->field_reg_start_date['und'][0]['value'] = $form_state['values']['field_reg_start_date'];
-        $item->field_reg_end_date['und'][0]['value'] = $form_state['values']['field_reg_end_date'];
+        $item->field_reg_fio['und'][0]['value'] = $field_reg_fio;
+        $item->field_reg_place['und'][0]['value'] = $field_reg_place;
+        $item->field_reg_dolzhnost['und'][0]['value'] = $field_reg_dolzhnost;
+        $item->field_reg_phone['und'][0]['value'] = $field_reg_phone;
+        $item->field_reg_start_date['und'][0]['value'] = $field_reg_start_date;
+        $item->field_reg_end_date['und'][0]['value'] = $field_reg_end_date;
 
         // Сохраняем изменения
         $item->save();
@@ -674,5 +666,6 @@ function designer_journal_page_nadzor_edit_form_submit($form, &$form_state)
     // Устанавливаем сообщение об успешном сохранении
     drupal_set_message(t('Данные успешно обновлены.'));
 
-    // Перенаправляем на нужную страницу (например, на текущую страницу
+    // Перенаправляем на нужную страницу (например, на текущую страницу)
+    $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }

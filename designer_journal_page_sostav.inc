@@ -137,12 +137,12 @@ function designer_journal_page_sostav($object_id) {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
             var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>FIO</th>' +
-                '<th>Position</th>' +
-                '<th>Job Name</th>' +
-                '<th>Date</th>' +
-                '<th>Author</th>' +
-                '<th>Change Date</th>' +
+                '<th>Фио</th>' +
+                '<th>Занимаемая должность</th>' +
+                '<th>Наименование работ</th>' +
+                '<th>Дата</th>' +
+                '<th>Автор</th>' +
+                '<th>Дата изменения</th>' +
             '</tr></thead><tbody>';
 
             var rows = [];
@@ -246,7 +246,9 @@ function designer_journal_page_sostav($object_id) {
 
 
 
-
+table tr td:last-child {
+      white-space: nowrap;
+}
 
 
 .edit-form-row td {
@@ -262,31 +264,31 @@ function designer_journal_page_sostav($object_id) {
 
 
 
-
-
-
+.form-item-field-fio{
+    left: 0 !important;
+}
 
     .form-item {
-        margin: 0 !important;
-        padding: 0 !important;
+        margin: 10px !important;
+        padding: 0px !important;
         flex: 1 !important; /* Элементы будут занимать пространство в зависимости от установленного flex-basis */
     }
 
     .form-item-field-fio {
-        flex: 0 0 390px !important; /* Ширина для field_fio */
+        flex: 0 0 22% !important; /* Ширина для field_fio */
 
     }
 
     .form-item-field-dolzhnost {
-        flex: 0 0 390px !important; /* Ширина для field_dolzhnost */
+        flex: 0 22% !important; /* Ширина для field_dolzhnost */
     }
 
     .form-item-field-jobname {
-        flex: 0 0 390px !important; /* Ширина для field_jobname */
+        flex: 0 0 22% !important; /* Ширина для field_jobname */
     }
 
     .form-item-field-datenum {
-        flex: 0 0 390px !important; /* Ширина для field_datenum */
+        flex: 0 0 22% !important; /* Ширина для field_datenum */
     }
 
     .form-item input {
@@ -538,6 +540,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
 
 function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     global $user;
+
     // Загружаем объект field_collection_item по ID
     $item_id = $form_state['values']['item_id'];
     $field_collection_item = entity_load('field_collection_item', array($item_id));
@@ -549,12 +552,6 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
 
     $item = reset($field_collection_item);
 
-    // Сохранение старых данных в переменные
-    $rowid = $form_state['values']['index'];
-    $old_field_fio = isset($item->field_fio['und'][0]['value']) ? $item->field_fio['und'][0]['value'] : '';
-    $old_field_jobname = isset($item->field_jobname['und'][0]['value']) ? $item->field_jobname['und'][0]['value'] : '';
-    $old_field_datenum = isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '';
-    $old_field_dolzhnost = isset($item->field_dolzhnost['und'][0]['value']) ? $item->field_dolzhnost['und'][0]['value'] : '';
     // Получение новых данных из формы
     $field_datenum = $form_state['values']['field_datenum'];
     $field_dolzhnost = $form_state['values']['field_dolzhnost'];
@@ -571,13 +568,13 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
 
         // Устанавливаем значения для полей
         $field_collection_item_history->setHostEntity('node', $journal_node);
-        $field_collection_item_history->field_history_fio['und'][0]['value'] = $old_field_fio;
-        $field_collection_item_history->field_history_dolzhnost['und'][0]['value'] = $old_field_dolzhnost;
-        $field_collection_item_history->field_history_jobname['und'][0]['value'] = $old_field_jobname;
-        $field_collection_item_history->field_history_datenum['und'][0]['value'] = $old_field_datenum;
+        $field_collection_item_history->field_history_fio['und'][0]['value'] = $field_fio;
+        $field_collection_item_history->field_history_dolzhnost['und'][0]['value'] = $field_dolzhnost;
+        $field_collection_item_history->field_history_jobname['und'][0]['value'] = $field_jobname;
+        $field_collection_item_history->field_history_datenum['und'][0]['value'] = $field_datenum;
         $field_collection_item_history->field_history_author['und'][0]['value'] = $user->name; // Логин текущего пользователя
         $field_collection_item_history->field_history_change_date['und'][0]['value'] = date('Y-m-d H:i:s'); // Текущая дата и время
-        $field_collection_item_history->field_history_sostav_rowid['und'][0]['value'] = $rowid;
+        $field_collection_item_history->field_history_sostav_rowid['und'][0]['value'] = $form_state['values']['index'];
 
         // Сохраняем элемент коллекции
         $field_collection_item_history->save();
@@ -595,12 +592,10 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     $item->field_datenum['und'][0]['value'] = $field_datenum;
     $item->save();
 
-
-
-
     drupal_set_message(t('Изменения успешно сохранены.'));
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }
+
 
 
 
