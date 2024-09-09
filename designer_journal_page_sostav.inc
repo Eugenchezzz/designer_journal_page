@@ -39,7 +39,7 @@ function designer_journal_page_sostav($object_id) {
         t('Действие'),
     );
 
-    $rows = array();
+
 
     $rows = array();
 
@@ -145,30 +145,50 @@ function designer_journal_page_sostav($object_id) {
                 '<th>ФИО</th>' +
                 '<th>Занимаемая должность</th>' +
                 '<th>Наименование работ</th>' +
-                '<th>Дата</th>' +
+                '<th>Дата и номер приказа</th>' +
                 '<th>Дата изменения</th>' +
             '</tr></thead><tbody>';
 
             var rows = [];
 
             // Фильтрация данных по значению индекса и добавление строк в массив
-            $.each(historyData, function(i, item) {
-                var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
-                var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
 
-                // Добавление строки в массив только если есть совпадение
-                if (match === 'Match') {
-                    rows.push(
-                        '<tr>' +
-                        '<td>' + item.fio + '</td>' +
-                        '<td>' + item.dolzhnost + '</td>' +
-                        '<td>' + item.jobname + '</td>' +
-                        '<td>' + item.datenum + '</td>' +
-                        '<td>' + item.change_date + '</td>' +
-                    '</tr>'
-                    );
-                }
-            });
+
+
+$.each(historyData, function(i, item) {
+    var rowidStr = item.rowid.toString(); // Преобразование rowid в строку
+    var match = (rowidStr === index) ? 'Match' : 'No match'; // Результат сравнения
+
+
+    var changeDate = new Date(item.change_date);
+    var formattedChangeDate = ('0' + changeDate.getDate()).slice(-2) + '.' +
+                              ('0' + (changeDate.getMonth() + 1)).slice(-2) + '.' +
+                              changeDate.getFullYear();
+
+    // Добавление строки в массив только если есть совпадение
+    if (match === 'Match') {
+        rows.push(
+            '<tr>' +
+            '<td>' + item.fio + '</td>' +
+            '<td>' + item.dolzhnost + '</td>' +
+            '<td>' + item.jobname + '</td>' +
+            '<td>' + item.datenum + '</td>' + // Оставляем дату без изменений
+            '<td>' + formattedChangeDate + '</td>' + // Используем отформатированную дату изменения
+        '</tr>'
+        );
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
 
             // Добавление строк в таблицу в обратном порядке
             rows.reverse().forEach(function(row) {
@@ -371,13 +391,27 @@ table tr td:last-child {
     width: 100% !important;
 }
 
-    
+ /* ПРИДАНИЕ СТИЛЕЙ КАК У ВЛАДА ТАБЛИЧКАМ */
+.table.table-hover.table-striped {
+    min-width: 1200px !important;
+}
+
+ .table.table-hover.table-striped tbody tr:nth-child(4n-3), /* 1 и 2 строки */
+.table.table-hover.table-striped tbody tr:nth-child(4n-2) {
+    background-color: #f2f7fd;
+}
+
+.table.table-hover.table-striped tbody tr:nth-child(4n-1), /* 3 и 4 строки */
+.table.table-hover.table-striped tbody tr:nth-child(4n) {
+    background-color: #eaeff5; /* Серый цвет, можно поменять */
+}
+
 </style>';
 
     $output .= theme('table', array('header' => $header, 'rows' => $rows)); // рендер таблицы
 
-   // $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
-   // $output .= drupal_render($form);
+    // $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
+    // $output .= drupal_render($form);
     return $output;
 }
 
@@ -652,19 +686,3 @@ function designer_journal_page_sostav_edit_form_submit($form, &$form_state) {
     drupal_set_message(t('Изменения успешно сохранены.'));
     $form_state['redirect'] = $_SERVER['REQUEST_URI'];
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

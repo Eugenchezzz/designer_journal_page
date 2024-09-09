@@ -59,7 +59,7 @@ function designer_journal_page_uchetniy_list($object_id) {
 
                 // Извлечение даты (только дата без времени)
                 $date_value = isset($item->field_list_date['und'][0]['value']) ? $item->field_list_date['und'][0]['value'] : '';
-                $date_only = !empty($date_value) ? date('Y-m-d', strtotime($date_value)) : '';
+                $date_only = !empty($date_value) ? date('d.m.Y', strtotime($date_value)) : '';
 
                 // Формируем строку для таблицы
                 $rows[] = array(
@@ -399,7 +399,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Обратите внимание на формат даты
+        '#date_format' => 'd.m.Y', // Обратите внимание на формат даты
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',

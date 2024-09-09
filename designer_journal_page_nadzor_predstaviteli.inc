@@ -54,11 +54,11 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
                 // Форматируем дату из поля field_reg_start_date
                 $start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
-                $formatted_start_date = $start_date ? date('Y-m-d', strtotime($start_date)) : '';
+                $formatted_start_date = $start_date ? date('d.m.Y', strtotime($start_date)) : '';
 
                 // Форматируем дату из поля field_reg_end_date
                 $end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
-                $formatted_end_date = $end_date ? date('Y-m-d', strtotime($end_date)) : '';
+                $formatted_end_date = $end_date ? date('d.m.Y', strtotime($end_date)) : '';
 
                 $rows[] = array(
                     'data' => array(
@@ -115,20 +115,34 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
             if ($field_collection_item) {
                 $history_item = reset($field_collection_item);
 
+                // Форматирование даты начала
+                $start_date = isset($history_item->field_history_reg_start_date['und'][0]['value']) ? $history_item->field_history_reg_start_date['und'][0]['value'] : '';
+                $formatted_start_date = !empty($start_date) ? date('d.m.Y', strtotime($start_date)) : '';
+
+                // Форматирование даты окончания
+                $end_date = isset($history_item->field_history_reg_end_date['und'][0]['value']) ? $history_item->field_history_reg_end_date['und'][0]['value'] : '';
+                $formatted_end_date = !empty($end_date) ? date('d.m.Y', strtotime($end_date)) : '';
+
+                // Форматирование даты изменения
+                $change_date = isset($history_item->field_history_reg_change_date['und'][0]['value']) ? $history_item->field_history_reg_change_date['und'][0]['value'] : '';
+                $formatted_change_date = !empty($change_date) ? date('d.m.Y', strtotime($change_date)) : '';
+
+                // Добавление данных в массив
                 $history_items[] = [
                     'rowid' => isset($history_item->field_history_rowid['und'][0]['value']) ? $history_item->field_history_rowid['und'][0]['value'] : '',
                     'reg_fio' => isset($history_item->field_history_reg_fio['und'][0]['value']) ? $history_item->field_history_reg_fio['und'][0]['value'] : '',
                     'reg_place' => isset($history_item->field_history_reg_place['und'][0]['value']) ? $history_item->field_history_reg_place['und'][0]['value'] : '',
                     'reg_dolzhnost' => isset($history_item->field_history_reg_dolzhnost['und'][0]['value']) ? $history_item->field_history_reg_dolzhnost['und'][0]['value'] : '',
                     'reg_phone' => isset($history_item->field_history_reg_phone['und'][0]['value']) ? $history_item->field_history_reg_phone['und'][0]['value'] : '',
-                    'reg_start_date' => isset($history_item->field_history_reg_start_date['und'][0]['value']) ? $history_item->field_history_reg_start_date['und'][0]['value'] : '',
-                    'reg_end_date' => isset($history_item->field_history_reg_end_date['und'][0]['value']) ? $history_item->field_history_reg_end_date['und'][0]['value'] : '',
+                    'reg_start_date' => $formatted_start_date, // Форматированная дата начала
+                    'reg_end_date' => $formatted_end_date,     // Форматированная дата окончания
                     'reg_author' => isset($history_item->field_history_reg_author['und'][0]['value']) ? $history_item->field_history_reg_author['und'][0]['value'] : '',
-                    'reg_change_date' => isset($history_item->field_history_reg_change_date['und'][0]['value']) ? $history_item->field_history_reg_change_date['und'][0]['value'] : '',
+                    'reg_change_date' => $formatted_change_date, // Форматированная дата изменения
                 ];
             }
         }
     }
+
 
     $json_history_data = json_encode($history_items);
 
@@ -224,11 +238,13 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
     
     min-width: 40px !important;
     min-height: 34px !important;
-    margin: 0 !important;
+    margin: 0 3px 0 0;
     padding: 0 !important;
     border: solid 1px #cacaca;
     border-radius: 4px;
     background-color: #fdfdfd; /* Цвет фона */
+    
+    
 
 }
 
@@ -249,8 +265,10 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
 .fields-inline .open-history-button {
     margin-left: 4.5%; /* Добавляет отступ перед вторым последним элементом, если нужно */
-    margin-right: 0%;
+
 }
+
+
 
 
 
@@ -357,6 +375,18 @@ width: 100% !important;
     width: 5px !important; /* Статическая ширина для последнего столбца */
 }
     
+    
+     /* ПРИДАНИЕ СТИЛЕЙ КАК У ВЛАДА ТАБЛИЧКАМ */
+
+ .table.table-hover.table-striped tbody tr:nth-child(4n-3), /* 1 и 2 строки */
+.table.table-hover.table-striped tbody tr:nth-child(4n-2) {
+    background-color: #f2f7fd;
+}
+
+.table.table-hover.table-striped tbody tr:nth-child(4n-1), /* 3 и 4 строки */
+.table.table-hover.table-striped tbody tr:nth-child(4n) {
+    background-color: #eaeff5; /* Серый цвет, можно поменять */
+}
 </style>';
   $form = drupal_get_form('designer_journal_predstaviteli_nadzora_form', $journal_node);
   $output .= drupal_render($form);
@@ -427,7 +457,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+        '#date_format' => 'd.m.Y', // Это должно убрать поле времени
     );
 
     $form['fields_container']['field_reg_end_date'] = array(
@@ -444,7 +474,7 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Это должно убрать поле времени
+        '#date_format' => 'd.m.Y', // Это должно убрать поле времени
     );
 
 
@@ -465,8 +495,6 @@ function designer_journal_predstaviteli_nadzora_form($form, &$form_state, $journ
 
   return $form;
 }
-
-
 function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state) {
   // Получаем ноду журнала
   $journal_node = $form_state['journal_node'];
@@ -536,10 +564,6 @@ function designer_journal_predstaviteli_nadzora_form_submit($form, &$form_state)
 
 
 // ОБРАБОТЧИКИ РЕДАКТИРОВАНИЯ ДАННЫХ
-
-
-
-
 function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $item_id, $index, $journal_id){
     $form['container'] = array(
         '#type' => 'container',
@@ -599,7 +623,7 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Это убирает поле времени
+        '#date_format' => 'd.m.Y', // Это убирает поле времени
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
@@ -620,7 +644,7 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d', // Это убирает поле времени
+        '#date_format' => 'd.m.Y', // Это убирает поле времени
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
@@ -698,7 +722,7 @@ function designer_journal_page_nadzor_edit_form_submit($form, &$form_state) {
         $field_collection_item_history->field_history_reg_start_date['und'][0]['value'] = $field_reg_start_date;
         $field_collection_item_history->field_history_reg_end_date['und'][0]['value'] = $field_reg_end_date;
         $field_collection_item_history->field_history_reg_author['und'][0]['value'] = $user->name; // Логин текущего пользователя
-        $field_collection_item_history->field_history_reg_change_date['und'][0]['value'] = date('Y-m-d H:i:s'); // Текущая дата и время
+        $field_collection_item_history->field_history_reg_change_date['und'][0]['value'] = date('d.m.Y '); // Текущая дата и время
         $field_collection_item_history->field_history_rowid['und'][0]['value'] = $rowid;
 
         // Сохраняем элемент коллекции
