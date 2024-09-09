@@ -46,53 +46,54 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
 
   // цикл записи в табличку для отображения
     $index = 0;
-  foreach ($journal_node->field_predstaviteli_nadzora['und'] as $item) {
-    $field_collection_item = entity_load('field_collection_item', array($item['value']));
-    if ($field_collection_item) {
-      $item = reset($field_collection_item);
+    if (isset($journal_node->field_predstaviteli_nadzora['und']) && is_array($journal_node->field_predstaviteli_nadzora['und'])) {
+        foreach ($journal_node->field_predstaviteli_nadzora['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            if ($field_collection_item) {
+                $item = reset($field_collection_item);
 
+                // Форматируем дату из поля field_reg_start_date
+                $start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
+                $formatted_start_date = $start_date ? date('Y-m-d', strtotime($start_date)) : '';
 
-        // Форматируем дату из поля field_reg_start_date
-        $start_date = isset($item->field_reg_start_date['und'][0]['value']) ? $item->field_reg_start_date['und'][0]['value'] : '';
-        $formatted_start_date = $start_date ? date('Y-m-d', strtotime($start_date)) : '';
+                // Форматируем дату из поля field_reg_end_date
+                $end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
+                $formatted_end_date = $end_date ? date('Y-m-d', strtotime($end_date)) : '';
 
-// Форматируем дату из поля field_reg_end_date
-        $end_date = isset($item->field_reg_end_date['und'][0]['value']) ? $item->field_reg_end_date['und'][0]['value'] : '';
-        $formatted_end_date = $end_date ? date('Y-m-d', strtotime($end_date)) : '';
+                $rows[] = array(
+                    'data' => array(
+                        isset($item->field_reg_fio['und'][0]['value']) ? check_plain($item->field_reg_fio['und'][0]['value']) : '',
+                        isset($item->field_reg_place['und'][0]['value']) ? check_plain($item->field_reg_place['und'][0]['value']) : '',
+                        isset($item->field_reg_dolzhnost['und'][0]['value']) ? check_plain($item->field_reg_dolzhnost['und'][0]['value']) : '',
+                        isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
+                        $formatted_start_date,
+                        $formatted_end_date,
+                        '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
+                    <button class="edit-button btn btn-default" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+                    ),
+                    'id' => 'row-' . $index,
+                );
 
+                $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id, $index, $journal_id);
 
-      $rows[] = array(
-          'data' => array(
-           isset($item->field_reg_fio['und'][0]['value']) ? check_plain($item->field_reg_fio['und'][0]['value']) : '',
-           isset($item->field_reg_place['und'][0]['value']) ? check_plain($item->field_reg_place['und'][0]['value']) : '',
-           isset($item->field_reg_dolzhnost['und'][0]['value']) ? check_plain($item->field_reg_dolzhnost['und'][0]['value']) : '',
-           isset($item->field_reg_phone['und'][0]['value']) ? check_plain($item->field_reg_phone['und'][0]['value']) : '',
-           $formatted_start_date,
-           $formatted_end_date,
-              '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
-              <button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
-       ),
-          'id' => 'row-' . $index,
-      );
+                // Скрытая строка с формой
+                $rows[] = array(
+                    'data' => array(
+                        array(
+                            'data' => drupal_render($form),
+                            'colspan' => 7, // Объединяем все колонки
+                        ),
+                    ),
+                    'class' => array('edit-form-row'),
+                    'id' => 'edit-row-' . $index,
+                    'style' => 'display: none;', // Скрываем форму по умолчанию
+                );
+            }
+            $index++;
+        }
 
-        $form = drupal_get_form('designer_journal_page_nadzor_edit_form', $item, $item->item_id, $index, $journal_id);
-        // Скрытая строка с формой
-        $rows[] = array(
-            'data' => array(
-                array(
-                    'data' => drupal_render($form),
-                    'colspan' => 7, // Объединяем все колонки
-                ),
-            ),
-            'class' => array('edit-form-row'),
-            'id' => 'edit-row-' . $index,
-            'style' => 'display: none;', // Скрываем форму по умолчанию
-        );
-
-
-    }
-    $index++;
-      drupal_add_js("
+        // Добавляем JavaScript для обработки кнопок
+        drupal_add_js("
         jQuery(document).ready(function($) {
             $('.edit-button').click(function() {
                 var index = $(this).data('index');
@@ -101,30 +102,34 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
             });
         });
     ", 'inline');
-
-
-  }
+    }
 
   //ПОЛНАЯ ОБРАБОТКА ЖУРНАЛА ИСТОРИИ ИЗМЕНЕНИЙ
     $history_items = [];
 
-    foreach ($journal_node->field_history_nadzor['und'] as $item) {
-        $field_collection_item = entity_load('field_collection_item', array($item['value']));
-        $history_item = reset($field_collection_item);
+    $history_items = array();
 
-        $history_items[] = [
-            'rowid' => isset($history_item->field_history_rowid['und'][0]['value']) ? $history_item->field_history_rowid['und'][0]['value'] : '',
-            'reg_fio' => isset($history_item->field_history_reg_fio['und'][0]['value']) ? $history_item->field_history_reg_fio['und'][0]['value'] : '',
-            'reg_place' => isset($history_item->field_history_reg_place['und'][0]['value']) ? $history_item->field_history_reg_place['und'][0]['value'] : '',
-            'reg_dolzhnost' => isset($history_item->field_history_reg_dolzhnost['und'][0]['value']) ? $history_item->field_history_reg_dolzhnost['und'][0]['value'] : '',
-            'reg_phone' => isset($history_item->field_history_reg_phone['und'][0]['value']) ? $history_item->field_history_reg_phone['und'][0]['value'] : '',
-            'reg_start_date' => isset($history_item->field_history_reg_start_date['und'][0]['value']) ? $history_item->field_history_reg_start_date['und'][0]['value'] : '',
-            'reg_end_date' => isset($history_item->field_history_reg_end_date['und'][0]['value']) ? $history_item->field_history_reg_end_date['und'][0]['value'] : '',
-            'reg_author' => isset($history_item->field_history_reg_author['und'][0]['value']) ? $history_item->field_history_reg_author['und'][0]['value'] : '',
-            'reg_change_date' => isset($history_item->field_history_reg_change_date['und'][0]['value']) ? $history_item->field_history_reg_change_date['und'][0]['value'] : '',
-        ];
+    if (isset($journal_node->field_history_nadzor['und']) && is_array($journal_node->field_history_nadzor['und'])) {
+        foreach ($journal_node->field_history_nadzor['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            if ($field_collection_item) {
+                $history_item = reset($field_collection_item);
 
+                $history_items[] = [
+                    'rowid' => isset($history_item->field_history_rowid['und'][0]['value']) ? $history_item->field_history_rowid['und'][0]['value'] : '',
+                    'reg_fio' => isset($history_item->field_history_reg_fio['und'][0]['value']) ? $history_item->field_history_reg_fio['und'][0]['value'] : '',
+                    'reg_place' => isset($history_item->field_history_reg_place['und'][0]['value']) ? $history_item->field_history_reg_place['und'][0]['value'] : '',
+                    'reg_dolzhnost' => isset($history_item->field_history_reg_dolzhnost['und'][0]['value']) ? $history_item->field_history_reg_dolzhnost['und'][0]['value'] : '',
+                    'reg_phone' => isset($history_item->field_history_reg_phone['und'][0]['value']) ? $history_item->field_history_reg_phone['und'][0]['value'] : '',
+                    'reg_start_date' => isset($history_item->field_history_reg_start_date['und'][0]['value']) ? $history_item->field_history_reg_start_date['und'][0]['value'] : '',
+                    'reg_end_date' => isset($history_item->field_history_reg_end_date['und'][0]['value']) ? $history_item->field_history_reg_end_date['und'][0]['value'] : '',
+                    'reg_author' => isset($history_item->field_history_reg_author['und'][0]['value']) ? $history_item->field_history_reg_author['und'][0]['value'] : '',
+                    'reg_change_date' => isset($history_item->field_history_reg_change_date['und'][0]['value']) ? $history_item->field_history_reg_change_date['und'][0]['value'] : '',
+                ];
+            }
+        }
     }
+
     $json_history_data = json_encode($history_items);
 
     drupal_add_js("
@@ -136,14 +141,13 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
         $('.open-history-button').click(function() {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
-            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>Фио</th>' +
+            var tableContent = '<table class=\"table\"><thead><tr>' +
+                '<th>ФИО</th>' +
                 '<th>Место работы</th>' +
                 '<th>Занимаемая должность</th>' +
                 '<th>Номер телефона</th>' +
                 '<th>Дата приезда</th>' +
                 '<th>Дата отъезда </th>' +
-                '<th>Автор</th>' +
                 '<th>Дата изменения</th>' +
             '</tr></thead><tbody>';
 
@@ -164,7 +168,6 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
                         '<td>' + item.reg_phone + '</td>' +
                         '<td>' + item.reg_start_date + '</td>' +
                         '<td>' + item.reg_end_date + '</td>' +
-                        '<td>' + item.reg_author + '</td>' +
                         '<td>' + item.reg_change_date + '</td>' +
                     '</tr>'
                     );
@@ -214,6 +217,47 @@ function designer_journal_page_nadzor_predstaviteli($object_id) {
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
 
     $output .= '<style>
+/* Стиль кнопок сабмита редактирования */
+
+.form-submit:not(#designer-journal-predstaviteli-nadzora-form div .form-submit) {
+    font-size: 0; /* Скрывает текст */
+    
+    min-width: 40px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: solid 1px #cacaca;
+    border-radius: 4px;
+    background-color: #fdfdfd; /* Цвет фона */
+
+}
+
+
+.form-submit:not(#designer-journal-predstaviteli-nadzora-form div .form-submit) span {
+    font-size: initial; /* Восстанавливает размер текста внутри span */
+    color: #333333;
+    position: relative;
+    left: 4px;
+    margin-bottom: 4px ;
+}
+
+.form-submit:not(#designer-journal-predstaviteli-nadzora-form div .form-submit):hover span {
+    color: #ffffff; /* Цвет текста при наведении */
+}
+
+
+
+.fields-inline .open-history-button {
+    margin-left: 4.5%; /* Добавляет отступ перед вторым последним элементом, если нужно */
+    margin-right: 0%;
+}
+
+
+
+
+
+
+
 
 /* ПЕРЕСТАНОВКА КНОПОЧКИ В КОЛОРБОКСЕ */
 #cboxClose{
@@ -316,7 +360,6 @@ width: 100% !important;
 </style>';
   $form = drupal_get_form('designer_journal_predstaviteli_nadzora_form', $journal_node);
   $output .= drupal_render($form);
-
 
 
 
@@ -502,7 +545,7 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex; align-items: center; gap: 20px;', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex; align-items: center; gap: 4px;', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 
@@ -598,9 +641,24 @@ function designer_journal_page_nadzor_edit_form($form, &$form_state, $item, $ite
         '#default_value' => $index,
     );
 
-    $form['submit'] = array(
+    $form['container']['open_history_button'] = array(
+        '#type' => 'markup',
+        '#markup' => '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $item_id . '">
+                    <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span>
+                  </button>',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+
+        ),
+    );
+
+    $form['container']['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+
+        ),
     );
 
     return $form;

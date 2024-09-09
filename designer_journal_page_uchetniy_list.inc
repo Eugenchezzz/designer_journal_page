@@ -51,44 +51,47 @@ function designer_journal_page_uchetniy_list($object_id) {
 
     // Проходимся по элементам коллекции полей
     $row_index = 0;
-    foreach ($journal_node->field_uchetniy_list['und'] as $item) {
-        $field_collection_item = entity_load('field_collection_item', array($item['value']));
-        if ($field_collection_item) {
-            $item = reset($field_collection_item);
+    if (isset($journal_node->field_uchetniy_list['und']) && is_array($journal_node->field_uchetniy_list['und'])) {
+        foreach ($journal_node->field_uchetniy_list['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            if ($field_collection_item) {
+                $item = reset($field_collection_item);
 
-            // Извлечение даты (только дата без времени)
-            $date_value = isset($item->field_list_date['und'][0]['value']) ? $item->field_list_date['und'][0]['value'] : '';
-            $date_only = !empty($date_value) ? date('Y-m-d', strtotime($date_value)) : '';
+                // Извлечение даты (только дата без времени)
+                $date_value = isset($item->field_list_date['und'][0]['value']) ? $item->field_list_date['und'][0]['value'] : '';
+                $date_only = !empty($date_value) ? date('Y-m-d', strtotime($date_value)) : '';
 
-            // Формируем строку для таблицы
-            $rows[] = array(
-                check_plain($date_only),
-                isset($item->field_list_zapis_proizvel['und'][0]['value']) ? check_plain($item->field_list_zapis_proizvel['und'][0]['value']) : '',
-                isset($item->field_list_oznak_org['und'][0]['value']) ? check_plain($item->field_list_oznak_org['und'][0]['value']) : '',
-                isset($item->field_list_oznak_zak['und'][0]['value']) ? check_plain($item->field_list_oznak_zak['und'][0]['value']) : '',
-                isset($item->field_list_otmetka_ukaz_proizv['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_proizv['und'][0]['value']) : '',
-                isset($item->field_list_otmetka_ukaz_predst['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_predst['und'][0]['value']) : '',
-                isset($item->field_list_narushenija['und'][0]['value']) ? check_markup($item->field_list_narushenija['und'][0]['value'], $item->field_list_narushenija['und'][0]['format']) : '',
-                isset($item->field_list_ukazanija['und'][0]['value']) ? check_markup($item->field_list_ukazanija['und'][0]['value'], $item->field_list_ukazanija['und'][0]['format']) : '',
-                // Объединяем обе кнопки в одну ячейку
-                '<button class="open-history-button btn btn-default form-submit" data-index="' . $row_index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button> 
-            <button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
-            );
-            $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $row_index);
-            // Скрытая строка с формой
-            $rows[] = array(
-                'data' => array(
-                    array(
-                        'data' => drupal_render($form),
-                        'colspan' => 9, // Объединяем все колонки
+                // Формируем строку для таблицы
+                $rows[] = array(
+                    check_plain($date_only),
+                    isset($item->field_list_zapis_proizvel['und'][0]['value']) ? check_plain($item->field_list_zapis_proizvel['und'][0]['value']) : '',
+                    isset($item->field_list_oznak_org['und'][0]['value']) ? check_plain($item->field_list_oznak_org['und'][0]['value']) : '',
+                    isset($item->field_list_oznak_zak['und'][0]['value']) ? check_plain($item->field_list_oznak_zak['und'][0]['value']) : '',
+                    isset($item->field_list_otmetka_ukaz_proizv['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_proizv['und'][0]['value']) : '',
+                    isset($item->field_list_otmetka_ukaz_predst['und'][0]['value']) ? check_plain($item->field_list_otmetka_ukaz_predst['und'][0]['value']) : '',
+                    isset($item->field_list_narushenija['und'][0]['value']) ? check_markup($item->field_list_narushenija['und'][0]['value'], $item->field_list_narushenija['und'][0]['format']) : '',
+                    isset($item->field_list_ukazanija['und'][0]['value']) ? check_markup($item->field_list_ukazanija['und'][0]['value'], $item->field_list_ukazanija['und'][0]['format']) : '',
+                    // Объединяем обе кнопки в одну ячейку
+                    '<button class="open-history-button btn btn-default form-submit" data-index="' . $row_index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button> 
+                 <button class="edit-button btn btn-default form-submit" data-index="' . $row_index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+                );
+
+                $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $row_index);
+                // Скрытая строка с формой
+                $rows[] = array(
+                    'data' => array(
+                        array(
+                            'data' => drupal_render($form),
+                            'colspan' => 9, // Объединяем все колонки
+                        ),
                     ),
-                ),
-                'class' => array('edit-form-row'),
-                'id' => 'edit-row-' . $row_index,
-                'style' => 'display: none;', // Скрываем форму по умолчанию
-            );
+                    'class' => array('edit-form-row'),
+                    'id' => 'edit-row-' . $row_index,
+                    'style' => 'display: none;', // Скрываем форму по умолчанию
+                );
+            }
+            $row_index++;
         }
-        $row_index++;
     }
 
     drupal_add_js("
@@ -204,32 +207,37 @@ width: 100% !important;
 
 
     // Добавляем форму добавления новой записи
-    $output .= '<hr style="border: 7px solid black;  width: 100%;;">';
+
     $output .= '<h1>Добавление записи</h1>';
     // Вывод формы добавления
       $form = drupal_get_form('designer_journal_page_uchetniy_list_add_form', $journal_id);
       $output .= drupal_render($form);
 
 // ОБРАБОТКА КНОПКИ ЖУРНАЛА
-    $history_items = [];
 
-    foreach ($journal_node->field_history_uchetniy_list['und'] as $item) {
-        $field_collection_item = entity_load('field_collection_item', array($item['value']));
-        $history_item = reset($field_collection_item);
+    $history_items = array();
 
-        $history_items[] = [
-            'rowid' => $history_item->field_history_list_rowid['und'][0]['value'],
-            //'zapis_proizvel' => $history_item->field_history_list_zapis_proizve['und'][0]['value'],
-            'date' => $history_item->field_history_list_date['und'][0]['value'],
-            'narushenija' => $history_item->field_history_list_narushenija['und'][0]['value'],
-            'ukazanija' => $history_item->field_history_list_ukazanija['und'][0]['value'],
-            'oznak_org' => $history_item->field_history_list_oznak_org['und'][0]['value'],
-            'oznak_zak' => $history_item->field_history_list_oznak_zak['und'][0]['value'],
-            'otmetka_ukaz_proizv' => $history_item->field_history_list_ukaz_proizv['und'][0]['value'],
-            'otmetka_ukaz_predst' => $history_item->field_history_list_ukaz_predst['und'][0]['value'],
+    if (isset($journal_node->field_history_uchetniy_list['und']) && is_array($journal_node->field_history_uchetniy_list['und'])) {
+        foreach ($journal_node->field_history_uchetniy_list['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            if ($field_collection_item) {
+                $history_item = reset($field_collection_item);
 
-        ];
+                $history_items[] = [
+                    'rowid' => isset($history_item->field_history_list_rowid['und'][0]['value']) ? $history_item->field_history_list_rowid['und'][0]['value'] : '',
+                    //'zapis_proizvel' => isset($history_item->field_history_list_zapis_proizve['und'][0]['value']) ? $history_item->field_history_list_zapis_proizve['und'][0]['value'] : '',
+                    'date' => isset($history_item->field_history_list_date['und'][0]['value']) ? $history_item->field_history_list_date['und'][0]['value'] : '',
+                    'narushenija' => isset($history_item->field_history_list_narushenija['und'][0]['value']) ? $history_item->field_history_list_narushenija['und'][0]['value'] : '',
+                    'ukazanija' => isset($history_item->field_history_list_ukazanija['und'][0]['value']) ? $history_item->field_history_list_ukazanija['und'][0]['value'] : '',
+                    'oznak_org' => isset($history_item->field_history_list_oznak_org['und'][0]['value']) ? $history_item->field_history_list_oznak_org['und'][0]['value'] : '',
+                    'oznak_zak' => isset($history_item->field_history_list_oznak_zak['und'][0]['value']) ? $history_item->field_history_list_oznak_zak['und'][0]['value'] : '',
+                    'otmetka_ukaz_proizv' => isset($history_item->field_history_list_ukaz_proizv['und'][0]['value']) ? $history_item->field_history_list_ukaz_proizv['und'][0]['value'] : '',
+                    'otmetka_ukaz_predst' => isset($history_item->field_history_list_ukaz_predst['und'][0]['value']) ? $history_item->field_history_list_ukaz_predst['und'][0]['value'] : '',
+                ];
+            }
+        }
     }
+
 
     $json_history_data = json_encode($history_items);
 
@@ -245,7 +253,7 @@ width: 100% !important;
         $('.open-history-button').click(function() {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
-            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
+            var tableContent = '<table class=\"table\"><thead><tr>' +
                 '<th>Дата</th>' +
                 '<th>Нарушения</th>' +
                 '<th>Указания</th>' +

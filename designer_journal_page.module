@@ -141,13 +141,15 @@ function designer_journal_page_page($object_id) {
 
                 $rows = array();
 
-                foreach ($journal_node->field_subpodryadchiki['und'] as $item) {
-                    $field_collection = field_collection_item_load($item['value']);
+                if (isset($journal_node->field_subpodryadchiki['und']) && is_array($journal_node->field_subpodryadchiki['und'])) {
+                    foreach ($journal_node->field_subpodryadchiki['und'] as $item) {
+                        $field_collection = field_collection_item_load($item['value']);
 
-                    $rows[] = array(
-                        check_plain($field_collection->field_sub_organization['und'][0]['value']),
-                        check_plain($field_collection->field_vypolnyaemye_raboty['und'][0]['value']),
-                    );
+                        $rows[] = array(
+                            check_plain($field_collection->field_sub_organization['und'][0]['value']),
+                            check_plain($field_collection->field_vypolnyaemye_raboty['und'][0]['value']),
+                        );
+                    }
                 }
 
 // Используем функцию theme() для создания таблицы
@@ -250,7 +252,7 @@ function designer_journal_edit_form($form, &$form_state, $journal_node) {
     $form['field_full_smetnaya_stoimost'] = array(
         '#type' => 'textfield',
         '#title' => t('Полная сметная стоимость строительства работ'),
-        '#default_value' => $journal_node->field_full_smetnaya_stoimost['und'][0]['value'],
+        '#default_value' => isset($journal_node->field_full_smetnaya_stoimost['und'][0]['value']) ? $journal_node->field_full_smetnaya_stoimost['und'][0]['value'] : '',
 
     );
 

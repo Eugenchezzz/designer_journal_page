@@ -41,43 +41,47 @@ function designer_journal_page_sostav($object_id) {
 
     $rows = array();
 
-    foreach ($journal_node->field_sostav_rbochei['und'] as $item) {
-        $field_collection_item = entity_load('field_collection_item', array($item['value']));
-        if ($field_collection_item) {
-            $item = reset($field_collection_item);
+    $rows = array();
 
-            // Основная строка с данными
-            $rows[] = array(
-                'data' => array(
+    if (isset($journal_node->field_sostav_rbochei['und']) && is_array($journal_node->field_sostav_rbochei['und'])) {
+        foreach ($journal_node->field_sostav_rbochei['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            if ($field_collection_item) {
+                $item = reset($field_collection_item);
 
-                    isset($item->field_fio['und'][0]['value']) ? check_plain($item->field_fio['und'][0]['value']) : '',
-                    isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
-                    isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
-                    isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
-                    '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
+                // Основная строка с данными
+                $rows[] = array(
+                    'data' => array(
+                        isset($item->field_fio['und'][0]['value']) ? check_plain($item->field_fio['und'][0]['value']) : '',
+                        isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
+                        isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
+                        isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
+                        '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
                     <button class="edit-button btn btn-default " data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
-//
-
-                ),
-                'id' => 'row-' . $index,
-            );
-            $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id, $index, $journal_id);
-            // Скрытая строка с формой
-            $rows[] = array(
-                'data' => array(
-                    array(
-                        'data' => drupal_render($form),
-                        'colspan' => 6, // Объединяем все колонки
                     ),
-                ),
-                'class' => array('edit-form-row'),
-                'id' => 'edit-row-' . $index,
-                'style' => 'display: none;', // Скрываем форму по умолчанию
-            );
-        }
+                    'id' => 'row-' . $index,
+                );
 
-        $index++;
+                $form = drupal_get_form('designer_journal_page_sostav_edit_form', $item, $item->item_id, $index, $journal_id);
+
+                // Скрытая строка с формой
+                $rows[] = array(
+                    'data' => array(
+                        array(
+                            'data' => drupal_render($form),
+                            'colspan' => 6, // Объединяем все колонки
+                        ),
+                    ),
+                    'class' => array('edit-form-row'),
+                    'id' => 'edit-row-' . $index,
+                    'style' => 'display: none;', // Скрываем форму по умолчанию
+                );
+            }
+
+            $index++;
+        }
     }
+
 
 
     $form = drupal_get_form('designer_journal_sostav_rbochei_form', $journal_node);
@@ -110,21 +114,22 @@ function designer_journal_page_sostav($object_id) {
 
     $history_items = [];
 
-    foreach ($journal_node->field_history_sostav['und'] as $item) {
-        $field_collection_item = entity_load('field_collection_item', array($item['value']));
-        $history_item = reset($field_collection_item);
+    if (isset($journal_node->field_history_sostav['und']) && is_array($journal_node->field_history_sostav['und'])) {
+        foreach ($journal_node->field_history_sostav['und'] as $item) {
+            $field_collection_item = entity_load('field_collection_item', array($item['value']));
+            $history_item = reset($field_collection_item);
 
-        $history_items[] = [
-            'rowid' => $history_item->field_history_sostav_rowid['und'][0]['value'],
-            'fio' => $history_item->field_history_fio['und'][0]['value'],
-            'dolzhnost' => $history_item->field_history_dolzhnost['und'][0]['value'],
-            'jobname' => $history_item->field_history_jobname['und'][0]['value'],
-            'datenum' => $history_item->field_history_datenum['und'][0]['value'],
-            'author' => $history_item->field_history_author['und'][0]['value'],
-            'change_date' => $history_item->field_history_change_date['und'][0]['value'],
-        ];
+            $history_items[] = [
+                'rowid' => isset($history_item->field_history_sostav_rowid['und'][0]['value']) ? $history_item->field_history_sostav_rowid['und'][0]['value'] : '',
+                'fio' => isset($history_item->field_history_fio['und'][0]['value']) ? $history_item->field_history_fio['und'][0]['value'] : '',
+                'dolzhnost' => isset($history_item->field_history_dolzhnost['und'][0]['value']) ? $history_item->field_history_dolzhnost['und'][0]['value'] : '',
+                'jobname' => isset($history_item->field_history_jobname['und'][0]['value']) ? $history_item->field_history_jobname['und'][0]['value'] : '',
+                'datenum' => isset($history_item->field_history_datenum['und'][0]['value']) ? $history_item->field_history_datenum['und'][0]['value'] : '',
+                'author' => isset($history_item->field_history_author['und'][0]['value']) ? $history_item->field_history_author['und'][0]['value'] : '',
+                'change_date' => isset($history_item->field_history_change_date['und'][0]['value']) ? $history_item->field_history_change_date['und'][0]['value'] : '',
+            ];
+        }
     }
-
     $json_history_data = json_encode($history_items);
 
     drupal_add_js("
