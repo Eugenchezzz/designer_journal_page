@@ -54,8 +54,8 @@ function designer_journal_page_sostav($object_id) {
                     isset($item->field_dolzhnost['und'][0]['value']) ? check_plain($item->field_dolzhnost['und'][0]['value']) : '',
                     isset($item->field_jobname['und'][0]['value']) ? check_plain($item->field_jobname['und'][0]['value']) : '',
                     isset($item->field_datenum['und'][0]['value']) ? check_plain($item->field_datenum['und'][0]['value']) : '',
-                    '<button class="open-history-button btn btn-default form-submit" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
-                    <button class="edit-button btn btn-default form-submit" data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
+                    '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $object_id . '"> <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span> </button>
+                    <button class="edit-button btn btn-default " data-index="' . $index . '"> <span class="icon glyphicon glyphicon-pencil" aria-hidden="true"></span> </button>',
 //
 
                 ),
@@ -136,12 +136,11 @@ function designer_journal_page_sostav($object_id) {
         $('.open-history-button').click(function() {
             var index = $(this).data('index').toString(); // Преобразование индекса в строку
 
-            var tableContent = '<h2>Журнал</h2><table class=\"table\"><thead><tr>' +
-                '<th>Фио</th>' +
+            var tableContent = '<table class=\"table\"><thead><tr>' +
+                '<th>ФИО</th>' +
                 '<th>Занимаемая должность</th>' +
                 '<th>Наименование работ</th>' +
                 '<th>Дата</th>' +
-                '<th>Автор</th>' +
                 '<th>Дата изменения</th>' +
             '</tr></thead><tbody>';
 
@@ -160,7 +159,6 @@ function designer_journal_page_sostav($object_id) {
                         '<td>' + item.dolzhnost + '</td>' +
                         '<td>' + item.jobname + '</td>' +
                         '<td>' + item.datenum + '</td>' +
-                        '<td>' + item.author + '</td>' +
                         '<td>' + item.change_date + '</td>' +
                     '</tr>'
                     );
@@ -211,7 +209,6 @@ function designer_journal_page_sostav($object_id) {
 
 
 
-    //
 
 
 
@@ -227,15 +224,54 @@ function designer_journal_page_sostav($object_id) {
 
 
 
-
-
-
-
-    // Выводим содержимое страницы
+    drupal_add_js("
+document.querySelectorAll(\"button[id^='edit-submit']\").forEach((btn, index, buttons) => {
+  if (index !== buttons.length - 1) {
+    btn.classList.add('highlight');
+  }
+});
+", 'inline');
 
 
     //ЗДЕСЬ ВСЕ ОСНОВНЫЕ СТИЛИ
     $output .= '<style>
+/* Стиль кнопок сабмита редактирования */
+
+.form-submit:not(#designer-journal-sostav-rbochei-form div .form-submit) {
+    font-size: 0; /* Скрывает текст */
+    
+    min-width: 40px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: solid 1px #cacaca;
+    border-radius: 4px;
+    background-color: #fdfdfd; /* Цвет фона */
+
+}
+
+
+.form-submit:not(#designer-journal-sostav-rbochei-form div .form-submit) span {
+    font-size: initial; /* Восстанавливает размер текста внутри span */
+    color: #333333;
+    position: relative;
+    left: 4px;
+    margin-bottom: 4px ;
+}
+
+.form-submit:not(#designer-journal-sostav-rbochei-form div .form-submit):hover span {
+    color: #ffffff; /* Цвет текста при наведении */
+}
+
+
+
+.fields-inline .open-history-button {
+    margin-left: 2%; /* Добавляет отступ перед вторым последним элементом, если нужно */
+    margin-right: 0.2%;
+}
+
+
+
 
 
 /* ПЕРЕСТАНОВКА КНОПОЧКИ В КОЛОРБОКСЕ */
@@ -462,7 +498,7 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
         '#type' => 'container',
         '#attributes' => array(
             'class' => array('fields-inline', 'form-inline'),
-            'style' => 'display: flex;  align-items: center;  gap: 1px !important', // Flex-wrap для переноса на новую строку при нехватке места
+            'style' => 'display: flex;  align-items: center;  gap: 1px !important;', // Flex-wrap для переноса на новую строку при нехватке места
         ),
     );
 
@@ -496,14 +532,14 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
             'style' => 'margin-right: 10px;',
         ),
     );
-
+// СЮДА ДОПИШЕМ СТИЛИ ЧТОБЫ БЫЛ МАКСИМАЛЬНЫЙ ОТСТУП
     $form['container']['field_datenum'] = array(
         '#type' => 'textfield',
 
         '#default_value' => isset($item->field_datenum['und'][0]['value']) ? $item->field_datenum['und'][0]['value'] : '',
         '#attributes' => array(
             'class' => array('form-field-inline'),
-            'style' => 'margin-right: 10px;',
+            'style' => 'margin-right: 1px;',
         ),
     );
 
@@ -524,9 +560,25 @@ function designer_journal_page_sostav_edit_form($form, &$form_state, $item, $ite
         '#default_value' => $journal_id,
     );
 
-    $form['submit'] = array(
+    $form['container']['open_history_button'] = array(
+        '#type' => 'markup',
+        '#markup' => '<button class="open-history-button btn btn-default" data-index="' . $index . '" data-objectID="' . $item_id . '">
+                    <span class="icon glyphicon glyphicon-time" title="История изменений" aria-hidden="true"></span>
+                  </button>',
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+
+        ),
+    );
+
+
+    $form['container']['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
+        '#attributes' => array(
+            'class' => array('form-field-inline'),
+            'style' => 'margin-right: 10px; ',
+        ),
     );
 
 
