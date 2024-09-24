@@ -59,7 +59,7 @@ function designer_journal_page_uchetniy_list($object_id) {
 
                 // Извлечение даты (только дата без времени)
                 $date_value = isset($item->field_list_date['und'][0]['value']) ? $item->field_list_date['und'][0]['value'] : '';
-                $date_only = !empty($date_value) ? date('d.m.Y', strtotime($date_value)) : '';
+                $date_only = !empty($date_value) ? date('Y-m-d', strtotime($date_value)) : '';
 
                 // Формируем строку для таблицы
                 $rows[] = array(
@@ -77,32 +77,94 @@ function designer_journal_page_uchetniy_list($object_id) {
                 );
 
                 $form = drupal_get_form('designer_journal_page_uchetniy_list_edit_form', $journal_id, $row_index);
-                // Скрытая строка с формой
+
+                // Скрытая строка с формой (форма изначально скрыта через display: none)
                 $rows[] = array(
                     'data' => array(
                         array(
-                            'data' => drupal_render($form),
+                            // Оборачиваем форму в div, который будет открываться в Colorbox
+                            'data' => '<div id="edit-row-' . $row_index . '" style="display: none;">' . drupal_render($form) . '</div>',
                             'colspan' => 9, // Объединяем все колонки
                         ),
                     ),
                     'class' => array('edit-form-row'),
-                    'id' => 'edit-row-' . $row_index,
-                    'style' => 'display: none;', // Скрываем форму по умолчанию
+                    'id' => 'edit-row-container-' . $row_index, // Уникальный идентификатор для контейнера
                 );
+
+
             }
             $row_index++;
         }
     }
 
+
+    // Обработчик нажатия на кнопку вне цикла
+
     drupal_add_js("
-        jQuery(document).ready(function($) {
-            $('.edit-button').click(function() {
-                var index = $(this).data('index');
-                $('#row-' + index).hide();
-                $('#edit-row-' + index).show();
-            });
+    jQuery(document).ready(function($) {
+        // Создаем затемняющий элемент
+        $('body').append('<div class=\"overlay\" style=\"display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9998;\"></div>');
+
+        $('.edit-button').click(function() {
+            var index = $(this).data('index');
+            $('#row-' + index).hide();
+            $('#edit-row-' + index).show();
+            $('.overlay').show(); // Показываем затемняющий элемент
         });
-    ", 'inline');
+
+        // Добавляем обработчик для скрытия элемента и затемнения
+        $('.overlay').click(function() {
+            var index = $('.edit-button:visible').data('index'); // Получаем индекс видимой кнопки
+            $('#edit-row-' + index).hide();
+            $(this).hide(); // Скрываем затемняющий элемент
+            $('#row-' + index).show(); // Показываем основной элемент
+        });
+    });
+", 'inline');
+
+
+
+
+
+
+// Рабочий обработчик открытия формы редактирования (без колорбокса)
+//    drupal_add_js("
+//        jQuery(document).ready(function($) {
+//            $('.edit-button').click(function() {
+//                var index = $(this).data('index');
+//                $('#row-' + index).hide();
+//                $('#edit-row-' + index).show();
+//            });
+//        });
+//    ", 'inline');
+
+    //ТАК КАК СДЕЛАТЬ КОЛОРБОКС ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ НЕ ПОЛУЧИЛОСЬ, СТИЛЯМИ СДЕЛАЕМ ЭТОТ ДИВ ПОХОЖИМ НА НЕГО
+    $output .= '<style>
+
+
+form[id^="designer-journal-page-uchetniy-list-edit-form"] {
+  padding: 3rem;
+}
+
+
+div[id^="edit-row-"] {
+border: none;
+}
+    div[id^="edit-row-"] {
+        
+        position: absolute;
+        z-index: 10000;
+        width: 110%;
+        background-color: rgb(255,255,255);
+        border-radius: 10px;
+        top: 40%; /* Центрируем по вертикали */
+        left: 50%; /* Центрируем по горизонтали */
+        transform: translate(-50%, -50%); /* Сдвигаем на 50% и поворачиваем на 45 градусов */
+    }
+</style>';
+
+
+
 
 
 
@@ -193,8 +255,29 @@ width: 100% !important;
 }
 
 
+/* ДЕЛАЕМ СТИЛИ КАК У ВЛАДА */
 
 
+/* Убираем границы в хедере таблицы, оставляя нижнее подчеркивание */
+.table.table-hover.table-striped.sticky-enabled.tableheader-processed.sticky-table thead th {
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+
+}
+
+/* Чередуем цвета строк таблицы */
+
+/* Устанавливаем цвета строк: 2 через 2 */
+.table.table-hover.table-striped.sticky-enabled.tableheader-processed.sticky-table tbody tr:nth-child(4n-3),
+.table.table-hover.table-striped.sticky-enabled.tableheader-processed.sticky-table tbody tr:nth-child(4n-2) {
+    background-color: #f2f7fd; /* Белый фон для первых двух строк в каждой группе */
+}
+
+.table.table-hover.table-striped.sticky-enabled.tableheader-processed.sticky-table tbody tr:nth-child(4n-1),
+.table.table-hover.table-striped.sticky-enabled.tableheader-processed.sticky-table tbody tr:nth-child(4n) {
+    background-color: #e8ecf3; /* Серый фон для следующих двух строк в каждой группе */
+}
 
 
 
@@ -238,7 +321,7 @@ width: 100% !important;
         }
     }
 
-
+    dsm($history_item);
     $json_history_data = json_encode($history_items);
 
 
@@ -399,7 +482,7 @@ function designer_journal_page_uchetniy_list_add_form($form, &$form_state, $jour
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'd.m.Y', // Обратите внимание на формат даты
+        '#date_format' => 'Y-m-d', // Обратите внимание на формат даты
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
@@ -619,7 +702,7 @@ function designer_journal_page_uchetniy_list_edit_form($form, &$form_state, $jou
         '#date_month_element' => 'month',
         '#date_year_element' => 'year',
         '#date_day_element' => 'day',
-        '#date_format' => 'Y-m-d',
+        '#date_format' => 'Y-n-d',
         '#attributes' => array(
             'class' => array('form-field-inline'),
             'style' => 'margin-right: 10px;',
